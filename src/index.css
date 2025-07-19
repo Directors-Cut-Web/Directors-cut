@@ -1,0 +1,67 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Definition of the design system. All colors, gradients, fonts, etc should be defined here.
+All colors MUST be HSL.
+*/
+
+@layer base {
+  :root {
+    /* Hollywood Studio Theme - Dark cinematic base */
+    --background: 220 15% 8%;
+    --foreground: 45 100% 85%;
+
+    --card: 220 15% 12%;
+    --card-foreground: 45 100% 85%;
+
+    --popover: 220 15% 12%;
+    --popover-foreground: 45 100% 85%;
+
+    /* Golden Hollywood glamour */
+    --primary: 45 100% 55%;
+    --primary-foreground: 220 15% 8%;
+    --primary-glow: 45 100% 70%;
+
+    /* Silver screen accents */
+    --secondary: 210 15% 25%;
+    --secondary-foreground: 45 100% 85%;
+
+    --muted: 220 15% 15%;
+    --muted-foreground: 220 8% 60%;
+
+    --accent: 240 100% 65%;
+    --accent-foreground: 220 15% 8%;
+
+    --destructive: 0 85% 55%;
+    --destructive-foreground: 45 100% 95%;
+
+    --border: 220 15% 20%;
+    --input: 220 15% 15%;
+    --ring: 45 100% 55%;
+
+    /* Studio lighting gradients */
+    --gradient-hero: linear-gradient(135deg, hsl(220 15% 8%) 0%, hsl(220 15% 12%) 50%, hsl(220 15% 8%) 100%);
+    --gradient-spotlight: radial-gradient(circle at 50% 0%, hsl(45 100% 55% / 0.1) 0%, transparent 50%);
+    --gradient-card: linear-gradient(145deg, hsl(220 15% 12%) 0%, hsl(220 15% 10%) 100%);
+
+    /* Studio shadows */
+    --shadow-cinematic: 0 25px 50px -12px hsl(220 15% 4% / 0.8);
+    --shadow-spotlight: 0 0 80px hsl(45 100% 55% / 0.3);
+    --shadow-depth: 0 10px 30px -5px hsl(220 15% 4% / 0.6);
+
+    --radius: 0.75rem;
+  }
+
+  /* This .dark class seems to be from the old template, we are ignoring it for now to use your main theme */
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+}
