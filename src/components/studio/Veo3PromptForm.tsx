@@ -88,7 +88,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
-  // --- MODIFICATION: Added state for image preview ---
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
 
@@ -165,38 +164,49 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setIsDialogOpen(false);
   };
 
+  // --- MODIFICATION: Rewrote function to correctly handle async logic ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
-    // --- MODIFICATION: Create and set image preview URL ---
     setImagePreview(URL.createObjectURL(file));
     setIsLoading(true);
 
     try {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        const base64Image = (reader.result as string).split(',')[1];
-        const mimeType = file.type;
+      const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        reader.onload = async () => {
+          try {
+            const base64Image = (reader.result as string).split(',')[1];
+            const mimeType = file.type;
 
-        const response = await fetch('/api/analyze-image', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image: base64Image, mimeType }),
-        });
+            const response = await fetch('/api/analyze-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64Image, mimeType }),
+            });
 
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || 'Failed to analyze image.');
-        }
+            const data = await response.json();
+            if (!response.ok) {
+              reject(new Error(data.error || 'Failed to analyze image.'));
+            } else {
+              resolve(data);
+            }
+          } catch (e) {
+            reject(e);
+          }
+        };
 
-        setCharacter(data.characterAndAction || "");
-        setScene(data.sceneAndEnvironment || "");
-      };
-      reader.onerror = (error) => {
-        throw error;
-      };
+        reader.onerror = (error) => {
+          reject(error);
+        };
+      });
+
+      setCharacter(descriptions.characterAndAction || "");
+      setScene(descriptions.sceneAndEnvironment || "");
+
     } catch (error) {
       console.error("Image analysis failed:", error);
       alert(`Image analysis failed: ${error.message}`);
@@ -236,7 +246,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setAudioDesc("");
     setDialogue("");
     setFinalPrompt("");
-    // --- MODIFICATION: Clear image preview on start over ---
     setImagePreview(null);
   };
 
@@ -257,7 +266,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </CardHeader>
             <CardContent>
                 <p className="text-sm text-muted-foreground mb-3">Upload a starting frame and let AI describe the scene and character for you.</p>
-                {/* --- MODIFICATION: Added image preview and loading state --- */}
                 <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
                   {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
                   {isLoading && (
