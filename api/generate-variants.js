@@ -2,12 +2,9 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Use the correct environment variable name we set in Vercel
 const apiKey = process.env.GEMINI_API_KEY;
 
-// Check if the key exists right away
 if (!apiKey) {
-  // This will show a clear error in the Vercel logs if the key is missing
   throw new Error("The GEMINI_API_KEY environment variable is not set.");
 }
 
@@ -23,11 +20,10 @@ export default async function handler(request, response) {
   }
 
   try {
-    // --- FIX: Manually parse the request body ---
-    // The request body needs to be parsed from JSON text into an object.
-    const requestBody = JSON.parse(request.body);
-    const { text } = requestBody;
-    // -----------------------------------------
+    // --- FINAL FIX: Use request.body directly ---
+    // The body is already an object, so we don't need to parse it.
+    const { text } = request.body;
+    // -------------------------------------------
 
     if (!text) {
       return response.status(400).json({ error: 'No text prompt provided.' });
@@ -51,7 +47,6 @@ export default async function handler(request, response) {
 
   } catch (error) {
     console.error('Error in generate-variants function:', error);
-    // Provide the actual error message for easier debugging
     return response.status(500).json({ error: `Failed to get suggestions. Server error: ${error.message}` });
   }
 }
