@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload } from "lucide-react";
+import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload, Loader2 } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,8 +87,9 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [activeField, setActiveField] = useState<'character' | 'scene' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
-  // --- MODIFICATION: Added ref for file input ---
   const fileInputRef = useRef<HTMLInputElement>(null);
+  // --- MODIFICATION: Added state for image preview ---
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
 
 
   const presets = {
@@ -164,12 +165,14 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setIsDialogOpen(false);
   };
 
-  // --- MODIFICATION: Added handler for image upload ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    // --- MODIFICATION: Create and set image preview URL ---
+    setImagePreview(URL.createObjectURL(file));
     setIsLoading(true);
+
     try {
       const reader = new FileReader();
       reader.readAsDataURL(file);
@@ -233,6 +236,8 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setAudioDesc("");
     setDialogue("");
     setFinalPrompt("");
+    // --- MODIFICATION: Clear image preview on start over ---
+    setImagePreview(null);
   };
 
   const formControls = (
@@ -246,15 +251,24 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </CardContent>
         </Card>
 
-        {/* --- MODIFICATION: Added Image Upload Card --- */}
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> AI Scene Detection</CardTitle>
             </CardHeader>
             <CardContent>
                 <p className="text-sm text-muted-foreground mb-3">Upload a starting frame and let AI describe the scene and character for you.</p>
-                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
-                    Upload Starting Frame
+                {/* --- MODIFICATION: Added image preview and loading state --- */}
+                <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
+                  {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
+                  {isLoading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      <span className="ml-2 text-white">Analyzing...</span>
+                    </div>
+                  )}
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                    {imagePreview ? 'Upload a Different Frame' : 'Upload Starting Frame'}
                 </Button>
                 <input
                     type="file"
