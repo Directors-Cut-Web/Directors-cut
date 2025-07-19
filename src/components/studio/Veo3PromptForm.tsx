@@ -1,6 +1,6 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Target, Lightbulb, Mic, Film, Copy, MessageSquare } from "lucide-react";
+import { useState } from "react";
+import { Target, Lightbulb, Mic, Film, Copy } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,7 +29,7 @@ import {
 } from "@/components/ui/dialog";
 import { StudioLayout } from './StudioLayout';
 
-// --- Helper Components (Defined outside the main component) ---
+// --- Helper Components ---
 
 const InlineIcon = <Target className="inline h-3 w-3 stroke-red-600" />;
 
@@ -61,6 +61,7 @@ const SelectField = ({ label, placeholder, value, onChange, options }: { label: 
 );
 
 // --- Options ---
+const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
 const styleOptions = ["Cinematic", "Photorealistic", "Anime", "Documentary", "3D Animation", "Vibrant Color", "Monochromatic", "Surreal"];
 const shotOptions = ["Establishing Shot", "Wide Shot", "Full Shot", "Medium Shot", "Medium Close-up", "Close-up", "Extreme Close-up"];
 const motionOptions = ["Static Camera", "Slow Pan Left", "Whip Pan", "Dolly Zoom (Vertigo Shot)", "Tracking Shot", "Crane Shot Up", "Handheld Shaky Cam"];
@@ -69,6 +70,8 @@ const aspectRatioOptions = ["16:9", "9:16", "1:1", "4:3", "2.39:1"];
 
 // --- Main Component ---
 export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
+  // --- MODIFICATION: Added state for genre ---
+  const [genre, setGenre] = useState("Sci-Fi");
   const [character, setCharacter] = useState("");
   const [scene, setScene] = useState("");
   const [negative, setNegative] = useState("");
@@ -91,11 +94,10 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     if (!inputText) return alert("Please enter some text before enhancing.");
     setIsLoading(true);
     try {
-      // --- THE FIX IS HERE: Changed 'inputText' to 'text' to match the backend API ---
       const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "An unknown error occurred");
-      setVariants(data.suggestions); // The backend sends { suggestions: [...] }
+      setVariants(data.suggestions);
       setActiveField(fieldType);
       setIsDialogOpen(true);
     } catch (error) {
@@ -115,7 +117,8 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
-    const payload = { targetModel: 'Veo 3+ Studio', inputs: { character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue } };
+    // --- MODIFICATION: Added genre to the payload ---
+    const payload = { targetModel: 'Veo 3+ Studio', inputs: { genre, character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue } };
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
@@ -131,6 +134,16 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
 
   const formControls = (
     <div className="space-y-6">
+        {/* --- MODIFICATION: Added Genre Selector Card --- */}
+        <Card>
+            <CardHeader>
+                <CardTitle>What type of movie are you creating?</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} />
+            </CardContent>
+        </Card>
+
         <Card><CardHeader><CardTitle>Visual Foundation</CardTitle></CardHeader><CardContent className="space-y-4">
             <PromptField label="Character & Action" placeholder="e.g., A brave explorer discovering a hidden waterfall" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
             <PromptField label="Scene & Environment" placeholder="e.g., A lush, vibrant jungle with bioluminescent plants" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />

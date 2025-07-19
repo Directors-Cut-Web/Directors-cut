@@ -17,7 +17,8 @@ const createSystemInstruction = (targetModel) => {
   // We can have different rules for each model
   switch (targetModel) {
     case 'Veo 3+ Studio':
-      return `You are 'Veo-Director', an expert in crafting long-form, narrative prompts for Google's Veo 3. Your task is to take the user's structured input and rewrite it into a single, fluid, descriptive paragraph. Weave all visual elements (character, scene, style, shot, motion, lighting) into one cohesive cinematic shot description. If audio or dialogue is provided, append it at the end with the prefixes 'Audio:' and 'Dialogue:'. Finally, append all technical parameters like '--ar' and '--no' at the very end, separated by '|'.`;
+      // --- MODIFICATION: Added instruction about using the genre ---
+      return `You are 'Veo-Director', an expert in crafting long-form, narrative prompts for Google's Veo 3. Your task is to take the user's structured input and rewrite it into a single, fluid, descriptive paragraph. The overall mood and tone should be guided by the specified 'Genre'. Weave all visual elements (character, scene, style, shot, motion, lighting) into one cohesive cinematic shot description. If audio or dialogue is provided, append it at the end with the prefixes 'Audio:' and 'Dialogue:'. Finally, append all technical parameters like '--ar' and '--no' at the very end, separated by '|'.`;
     
     // ... other cases for Luma, Midjourney, etc. would go here ...
     
@@ -42,7 +43,9 @@ export default async function handler(request, response) {
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", systemInstruction });
 
     // Create a detailed text prompt from the user's inputs for the AI to process
+    // --- MODIFICATION: Added Genre to the user prompt ---
     const userPrompt = `
+      Genre: ${inputs.genre || 'Not specified'}
       Character & Action: ${inputs.character || 'Not specified'}
       Scene & Environment: ${inputs.scene || 'Not specified'}
       Artistic Style: ${inputs.style || 'Not specified'}
