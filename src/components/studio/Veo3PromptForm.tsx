@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Target, Lightbulb, Mic, Film, Copy } from "lucide-react";
+import { Target, Lightbulb, Mic, Film, Copy, Sparkles } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -70,7 +70,6 @@ const aspectRatioOptions = ["16:9", "9:16", "1:1", "4:3", "2.39:1"];
 
 // --- Main Component ---
 export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
-  // --- MODIFICATION: Added state for genre ---
   const [genre, setGenre] = useState("Sci-Fi");
   const [character, setCharacter] = useState("");
   const [scene, setScene] = useState("");
@@ -88,6 +87,56 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [activeField, setActiveField] = useState<'character' | 'scene' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
+
+  // --- MODIFICATION: Added preset definitions ---
+  const presets = {
+    'Street Interview': {
+      genre: 'Comedy',
+      character: 'An eccentric alien with shimmering skin, holding a retro microphone, asking passersby about their favorite human food.',
+      scene: 'A busy, sun-drenched city sidewalk with a diverse crowd of people walking by, some stopping to look at the camera.',
+      shot: 'Medium Close-up',
+      motion: 'Handheld Shaky Cam',
+      lighting: 'Hard, Direct Light',
+      dialogue: "Alien: (In a curious, high-pitched voice) 'Excuse me, human, what is your opinion on this delicacy you call... pizza?'",
+      audioDesc: 'City ambiance, chatter, occasional car horn, a faint, strange humming sound from the alien\'s microphone.',
+    },
+    'Cinematic Vlog': {
+      genre: 'Drama',
+      character: 'A solo traveler, journaling in a notebook while sipping coffee, a look of thoughtful reflection on their face.',
+      scene: 'A cozy, rain-streaked cafe window overlooking a misty mountain range at dawn.',
+      style: 'Cinematic',
+      shot: 'Medium Shot',
+      motion: 'Slow Pan Left',
+      lighting: 'Soft, Diffused Light',
+      audioDesc: 'Lofi hip-hop music, gentle rain sounds, the soft scratch of a pen on paper.',
+      dialogue: '',
+    },
+    'Unboxing Demo': {
+      genre: 'Sci-Fi',
+      character: 'A pair of clean, gloved hands carefully opening a mysterious, glowing box on a pedestal.',
+      scene: 'A clean, minimalist tabletop with a soft, out-of-focus background. The room is dark except for the light from the box.',
+      style: 'Photorealistic',
+      shot: 'Close-up',
+      motion: 'Static Camera',
+      lighting: 'Low-Key Lighting (Chiaroscuro)',
+      audioDesc: 'Satisfying sounds of tearing paper, a soft click as the box opens, a gentle, ethereal hum from the object inside.',
+      dialogue: '',
+    }
+  };
+
+  // --- MODIFICATION: Added handler for preset buttons ---
+  const handlePresetSelect = (presetName: keyof typeof presets) => {
+    const preset = presets[presetName];
+    setGenre(preset.genre || "");
+    setCharacter(preset.character || "");
+    setScene(preset.scene || "");
+    setStyle(preset.style || "");
+    setShot(preset.shot || "");
+    setMotion(preset.motion || "");
+    setLighting(preset.lighting || "");
+    setAudioDesc(preset.audioDesc || "");
+    setDialogue(preset.dialogue || "");
+  };
 
   const handleEnhance = async (fieldType: 'character' | 'scene') => {
     const inputText = fieldType === 'character' ? character : scene;
@@ -117,7 +166,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
-    // --- MODIFICATION: Added genre to the payload ---
     const payload = { targetModel: 'Veo 3+ Studio', inputs: { genre, character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue } };
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -134,13 +182,24 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
 
   const formControls = (
     <div className="space-y-6">
-        {/* --- MODIFICATION: Added Genre Selector Card --- */}
         <Card>
             <CardHeader>
                 <CardTitle>What type of movie are you creating?</CardTitle>
             </CardHeader>
             <CardContent>
                 <SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} />
+            </CardContent>
+        </Card>
+
+        {/* --- MODIFICATION: Added Preset Card --- */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Button variant="outline" onClick={() => handlePresetSelect('Street Interview')}>Street Interview</Button>
+                <Button variant="outline" onClick={() => handlePresetSelect('Cinematic Vlog')}>Cinematic Vlog</Button>
+                <Button variant="outline" onClick={() => handlePresetSelect('Unboxing Demo')}>Unboxing Demo</Button>
             </CardContent>
         </Card>
 
