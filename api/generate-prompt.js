@@ -1,9 +1,19 @@
+// /api/generate-prompt.cjs
+
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_API_KEY || '');
+// --- FIX 1: Use the correct environment variable and check that it exists ---
+const apiKey = process.env.GEMINI_API_KEY;
+
+if (!apiKey) {
+  throw new Error("The GEMINI_API_KEY environment variable is not set.");
+}
+
+const genAI = new GoogleGenerativeAI(apiKey);
+// -------------------------------------------------------------------------
 
 // This is the new, more intelligent instruction manual for our AI
-const createSystemInstruction = (targetModel, inputs) => {
+const createSystemInstruction = (targetModel) => {
   // We can have different rules for each model
   switch (targetModel) {
     case 'Veo 3+ Studio':
@@ -16,6 +26,7 @@ const createSystemInstruction = (targetModel, inputs) => {
   }
 };
 
+// --- FIX 2: Added the complete handler function to process the request ---
 export default async function handler(request, response) {
   if (request.method !== 'POST') {
     return response.status(405).json({ error: 'Method Not Allowed' });
@@ -23,35 +34,37 @@ export default async function handler(request, response) {
 
   try {
     const { targetModel, inputs } = request.body;
-    if (!inputs || !targetModel) {
-      return response.status(400).json({ error: 'Invalid payload provided.' });
+    if (!targetModel || !inputs) {
+        return response.status(400).json({ error: 'Missing targetModel or inputs in request body.' });
     }
 
-    // 1. Get the correct "instruction manual" for the selected AI model
     const systemInstruction = createSystemInstruction(targetModel, inputs);
+    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", systemInstruction });
 
-    // 2. Set up the AI model with the new instructions
-    const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash-latest',
-      systemInstruction: {
-        role: "model",
-        parts: [{ text: systemInstruction }],
-      }
-    });
+    // Create a detailed text prompt from the user's inputs for the AI to process
+    const userPrompt = `
+      Character & Action: ${inputs.character || 'Not specified'}
+      Scene & Environment: ${inputs.scene || 'Not specified'}
+      Artistic Style: ${inputs.style || 'Not specified'}
+      Lighting Style: ${inputs.lighting || 'Not specified'}
+      Camera Shot: ${inputs.shot || 'Not specified'}
+      Camera Motion: ${inputs.motion || 'Not specified'}
+      Audio Description: ${inputs.audioDesc || 'Not specified'}
+      Dialogue: ${inputs.dialogue || 'Not specified'}
+      Aspect Ratio: ${inputs.aspect || '16:9'}
+      Duration: ${inputs.duration || 5}s
+      Negative Prompt: ${inputs.negative || 'None'}
+    `;
 
-    // 3. Create a simple string of the user's inputs for the AI to process
-    const userInputString = JSON.stringify(inputs);
-
-    // 4. Call the AI to generate the final, rewritten prompt
-    const result = await model.generateContent(userInputString);
+    const result = await model.generateContent(userPrompt);
     const apiResponse = await result.response;
     const finalPrompt = apiResponse.text();
 
-    // 5. Send the successful response back
     return response.status(200).json({ finalPrompt });
 
   } catch (error) {
     console.error('Error in generate-prompt function:', error);
-    return response.status(500).json({ error: 'Failed to generate final prompt.' });
+    return response.status(500).json({ error: `Failed to generate prompt. Server error: ${error.message}` });
   }
 }
+// -------------------------------------------------------------------------
