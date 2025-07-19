@@ -1,6 +1,6 @@
 "use client";
 import { useState } from "react";
-import { Target, Lightbulb, Mic, Film, Copy, Sparkles } from "lucide-react";
+import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -88,7 +88,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
 
-  // --- MODIFICATION: Added preset definitions ---
   const presets = {
     'Street Interview': {
       genre: 'Comedy',
@@ -124,7 +123,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     }
   };
 
-  // --- MODIFICATION: Added handler for preset buttons ---
   const handlePresetSelect = (presetName: keyof typeof presets) => {
     const preset = presets[presetName];
     setGenre(preset.genre || "");
@@ -180,6 +178,22 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     }
   };
 
+  const handleStartOver = () => {
+    setGenre("Sci-Fi");
+    setCharacter("");
+    setScene("");
+    setNegative("");
+    setStyle("Cinematic");
+    setShot("");
+    setMotion("");
+    setLighting("");
+    setAspect("16:9");
+    setDuration(5);
+    setAudioDesc("");
+    setDialogue("");
+    setFinalPrompt("");
+  };
+
   const formControls = (
     <div className="space-y-6">
         <Card>
@@ -191,7 +205,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </CardContent>
         </Card>
 
-        {/* --- MODIFICATION: Added Preset Card --- */}
         <Card>
             <CardHeader>
                 <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets</CardTitle>
@@ -234,18 +247,32 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
                 {finalPrompt && (<Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button>)}
             </div>
         </div>
+
+        {/* --- MODIFICATION: Moved buttons here --- */}
+        <div className="flex items-center gap-2">
+            <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}</Button>
+            <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over">
+                <RotateCcw className="h-5 w-5" />
+            </Button>
+        </div>
+        
+        <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" />Field Guide</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+                <p><strong>Genre:</strong> Sets the overall mood (e.g., Horror will create tense, scary prompts).</p>
+                <p><strong>Visual Foundation:</strong> The core of your idea. Describe who is in the scene and where it takes place.</p>
+                <p><strong>Cinematic Controls:</strong> Use these to define the visual look. 'Cinematic' style with 'Golden Hour' lighting creates a beautiful, movie-like shot.</p>
+                <p><strong>Audio & Dialogue:</strong> Veo can generate sound! Describe background noises or write exact lines for characters to speak.</p>
+            </CardContent>
+        </Card>
         <Card>
             <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-                <p><strong>1. Show, Don't Tell:</strong> Instead of "he was sad", describe "a single tear rolled down his weathered cheek".</p>
-                <p><strong>2. Control Time:</strong> Use keywords like `time-lapse of a flower blooming` or `ultra slow-motion of a water droplet splashing`.</p>
-                <p><strong>3. Specify Film Language:</strong> Add terms like `lens flare`, `bokeh`, `grainy 16mm film texture` to your prompt for a specific look.</p>
-                <p><strong>4. Layer Audio:</strong> Create immersive soundscapes. Try `Audio: crackling fireplace, distant thunder, a ticking grandfather clock`. </p>
-                <p><strong>5. Define the Palette:</strong> Guide the colors directly. e.g., `...a moody color palette of deep blues and purples with a single, vibrant splash of crimson.`</p>
-                <p><strong>6. Use Metaphors:</strong> Veo understands abstract concepts. Try `...a city skyline that looks like a circuit board`.</p>
+                <p><strong>Show, Don't Tell:</strong> Instead of "he was sad", describe "a single tear rolled down his weathered cheek".</p>
+                <p><strong>Control Time:</strong> Use keywords like `time-lapse` or `ultra slow-motion`.</p>
+                <p><strong>Use Film Language:</strong> Add terms like `lens flare`, `bokeh`, or `grainy 16mm film` for a specific look.</p>
             </CardContent>
         </Card>
-        <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}</Button>
     </div>
   );
 
