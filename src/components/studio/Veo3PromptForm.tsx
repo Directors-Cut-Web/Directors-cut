@@ -91,17 +91,18 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     if (!inputText) return alert("Please enter some text before enhancing.");
     setIsLoading(true);
     try {
-        const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ inputText }) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message);
-        setVariants(data.variants);
-        setActiveField(fieldType);
-        setIsDialogOpen(true);
+      // --- THE FIX IS HERE: Changed 'inputText' to 'text' to match the backend API ---
+      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "An unknown error occurred");
+      setVariants(data.suggestions); // The backend sends { suggestions: [...] }
+      setActiveField(fieldType);
+      setIsDialogOpen(true);
     } catch (error) {
-        console.error("Failed to fetch variants:", error);
-        alert("Failed to get suggestions. Please try again.");
+      console.error("Failed to fetch variants:", error);
+      alert("Failed to get suggestions. Please try again.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
@@ -116,15 +117,15 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setFinalPrompt("");
     const payload = { targetModel: 'Veo 3+ Studio', inputs: { character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue } };
     try {
-        const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-        const data = await response.json();
-        if (!response.ok) throw new Error(data.message);
-        setFinalPrompt(data.finalPrompt);
-        onPromptGenerated(data.finalPrompt);
+      const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message);
+      setFinalPrompt(data.finalPrompt);
+      onPromptGenerated(data.finalPrompt);
     } catch (error) {
-        alert("Failed to generate the final prompt.");
+      alert("Failed to generate the final prompt.");
     } finally {
-        setIsLoading(false);
+      setIsLoading(false);
     }
   };
 
