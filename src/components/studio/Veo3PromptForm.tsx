@@ -1,6 +1,6 @@
 "use client";
-import { useState } from "react";
-import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen } from "lucide-react";
+import { useState, useRef } from "react";
+import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -87,6 +87,9 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [activeField, setActiveField] = useState<'character' | 'scene' | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
+  // --- MODIFICATION: Added ref for file input ---
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
 
   const presets = {
     'Street Interview': {
@@ -161,6 +164,44 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setIsDialogOpen(false);
   };
 
+  // --- MODIFICATION: Added handler for image upload ---
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setIsLoading(true);
+    try {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        const base64Image = (reader.result as string).split(',')[1];
+        const mimeType = file.type;
+
+        const response = await fetch('/api/analyze-image', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64Image, mimeType }),
+        });
+
+        const data = await response.json();
+        if (!response.ok) {
+          throw new Error(data.error || 'Failed to analyze image.');
+        }
+
+        setCharacter(data.characterAndAction || "");
+        setScene(data.sceneAndEnvironment || "");
+      };
+      reader.onerror = (error) => {
+        throw error;
+      };
+    } catch (error) {
+      console.error("Image analysis failed:", error);
+      alert(`Image analysis failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
@@ -202,6 +243,26 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </CardHeader>
             <CardContent>
                 <SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} />
+            </CardContent>
+        </Card>
+
+        {/* --- MODIFICATION: Added Image Upload Card --- */}
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> AI Scene Detection</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">Upload a starting frame and let AI describe the scene and character for you.</p>
+                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()}>
+                    Upload Starting Frame
+                </Button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/webp"
+                />
             </CardContent>
         </Card>
 
@@ -248,7 +309,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </div>
         </div>
 
-        {/* --- MODIFICATION: Moved buttons here --- */}
         <div className="flex items-center gap-2">
             <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}</Button>
             <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over">
