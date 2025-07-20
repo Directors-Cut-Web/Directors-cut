@@ -2,7 +2,6 @@
 
 import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// --- FIX 1: Use the correct environment variable and check that it exists ---
 const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
@@ -10,24 +9,22 @@ if (!apiKey) {
 }
 
 const genAI = new GoogleGenerativeAI(apiKey);
-// -------------------------------------------------------------------------
 
-// This is the new, more intelligent instruction manual for our AI
+// This is the intelligent instruction manual for our AI
 const createSystemInstruction = (targetModel) => {
-  // We can have different rules for each model
   switch (targetModel) {
     case 'Veo 3+ Studio':
-      // --- MODIFICATION: Added instruction about using the genre ---
       return `You are 'Veo-Director', an expert in crafting long-form, narrative prompts for Google's Veo 3. Your task is to take the user's structured input and rewrite it into a single, fluid, descriptive paragraph. The overall mood and tone should be guided by the specified 'Genre'. Weave all visual elements (character, scene, style, shot, motion, lighting) into one cohesive cinematic shot description. If audio or dialogue is provided, append it at the end with the prefixes 'Audio:' and 'Dialogue:'. Finally, append all technical parameters like '--ar' and '--no' at the very end, separated by '|'.`;
     
-    // ... other cases for Luma, Midjourney, etc. would go here ...
-    
+    // --- MODIFICATION: Added new case for Runway Gen 4 ---
+    case 'Runway Gen 4':
+      return `You are 'Runway-Animator', an expert in crafting concise, motion-focused prompts for Runway Gen 4. Your task is to take the user's structured input and combine it into a single, effective prompt. The prompt should start with the user's 'Motion Description'. Then, append the 'Style' and 'Genre' as descriptive keywords. Finally, add technical parameters for camera motion and motion strength at the very end, like '--camera-motion Pan_Left --motion-strength 5'.`;
+
     default:
       return 'You are a helpful assistant. Combine the following elements into a single, descriptive prompt.';
   }
 };
 
-// --- FIX 2: Added the complete handler function to process the request ---
 export default async function handler(request, response) {
   if (request.method !== 'POST') {
     return response.status(405).json({ error: 'Method Not Allowed' });
@@ -39,25 +36,35 @@ export default async function handler(request, response) {
         return response.status(400).json({ error: 'Missing targetModel or inputs in request body.' });
     }
 
-    const systemInstruction = createSystemInstruction(targetModel, inputs);
+    const systemInstruction = createSystemInstruction(targetModel);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", systemInstruction });
 
-    // Create a detailed text prompt from the user's inputs for the AI to process
-    // --- MODIFICATION: Added Genre to the user prompt ---
-    const userPrompt = `
-      Genre: ${inputs.genre || 'Not specified'}
-      Character & Action: ${inputs.character || 'Not specified'}
-      Scene & Environment: ${inputs.scene || 'Not specified'}
-      Artistic Style: ${inputs.style || 'Not specified'}
-      Lighting Style: ${inputs.lighting || 'Not specified'}
-      Camera Shot: ${inputs.shot || 'Not specified'}
-      Camera Motion: ${inputs.motion || 'Not specified'}
-      Audio Description: ${inputs.audioDesc || 'Not specified'}
-      Dialogue: ${inputs.dialogue || 'Not specified'}
-      Aspect Ratio: ${inputs.aspect || '16:9'}
-      Duration: ${inputs.duration || 5}s
-      Negative Prompt: ${inputs.negative || 'None'}
-    `;
+    // --- MODIFICATION: Added logic to handle different prompt structures ---
+    let userPrompt;
+    if (targetModel === 'Runway Gen 4') {
+      userPrompt = `
+        Motion Description: ${inputs.motionDescription || 'Not specified'}
+        Genre: ${inputs.genre || 'Not specified'}
+        Artistic Style: ${inputs.style || 'Not specified'}
+        Camera Motion: ${inputs.cameraMotion || 'Static'}
+        Motion Strength: ${inputs.motionStrength || 5}
+      `;
+    } else { // Default to Veo 3 structure
+      userPrompt = `
+        Genre: ${inputs.genre || 'Not specified'}
+        Character & Action: ${inputs.character || 'Not specified'}
+        Scene & Environment: ${inputs.scene || 'Not specified'}
+        Artistic Style: ${inputs.style || 'Not specified'}
+        Lighting Style: ${inputs.lighting || 'Not specified'}
+        Camera Shot: ${inputs.shot || 'Not specified'}
+        Camera Motion: ${inputs.motion || 'Not specified'}
+        Audio Description: ${inputs.audioDesc || 'Not specified'}
+        Dialogue: ${inputs.dialogue || 'Not specified'}
+        Aspect Ratio: ${inputs.aspect || '16:9'}
+        Duration: ${inputs.duration || 5}s
+        Negative Prompt: ${inputs.negative || 'None'}
+      `;
+    }
 
     const result = await model.generateContent(userPrompt);
     const apiResponse = await result.response;
@@ -70,4 +77,3 @@ export default async function handler(request, response) {
     return response.status(500).json({ error: `Failed to generate prompt. Server error: ${error.message}` });
   }
 }
-// -------------------------------------------------------------------------
