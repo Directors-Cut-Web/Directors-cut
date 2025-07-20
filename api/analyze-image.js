@@ -1,12 +1,10 @@
-// /api/analyze-image.cjs
+// /api/analyze-image.js
 
-// Use CommonJS 'require' syntax for a .cjs file
-const { GoogleGenerativeAI } = require('@google/generative-ai');
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
 const apiKey = process.env.GEMINI_API_KEY;
 
 if (!apiKey) {
-  // This will show a clear error in the Vercel logs if the key is missing
   throw new Error("The GEMINI_API_KEY environment variable is not set.");
 }
 
@@ -18,7 +16,7 @@ const visionPrompt = `You are a professional shot-describer for a film studio. A
 2.  **Scene and Environment:** Describe the background, setting, and overall environment in a single, descriptive sentence.
 Return your response as a valid JSON object with two keys: "characterAndAction" and "sceneAndEnvironment".`;
 
-async function handler(request, response) {
+export default async function handler(request, response) {
   if (request.method !== 'POST') {
     return response.status(405).json({ error: 'Method Not Allowed' });
   }
@@ -56,6 +54,3 @@ async function handler(request, response) {
     return response.status(500).json({ error: `Failed to analyze image. Server error: ${error.message}` });
   }
 }
-
-// Use CommonJS 'module.exports' syntax for a .cjs file
-module.exports = handler;
