@@ -10,14 +10,15 @@ const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptF
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 
 // Define the structure for each AI model's card
-// --- FIX: Corrected the image paths to point to the correct folder ---
+// --- FIX: Corrected the image paths to use your actual filenames ---
+// Please rename your image files in the 'public/lovable-uploads' folder to match these simple names.
 const studioModels = [
-  { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.jpg' },
-  { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.jpg' },
-  { id: 'kling', name: 'Kling 2.0', description: 'Coming Soon', component: null, image: '/lovable-uploads/kling.jpg' },
-  { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma.jpg' },
-  { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse.jpg' },
-  { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.jpg' },
+  { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.png' },
+  { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png' },
+  { id: 'kling', name: 'Kling 2.0', description: 'Coming Soon', component: null, image: '/lovable-uploads/kling.png' },
+  { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma.png' },
+  { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse.png' }, // Assuming one of the Midjourney images is for Pixverse
+  { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.png' },
 ];
 
 // A fallback component to show while the form is loading
