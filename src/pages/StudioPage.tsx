@@ -80,7 +80,7 @@ export default function StudioPage() {
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
         {/* --- FIX: Made the SheetContent wider for a better layout --- */}
-        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-5xl overflow-y-auto"> {/* Increased from 4xl to 5xl */}
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
             <SheetDescription>
