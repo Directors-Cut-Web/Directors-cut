@@ -79,8 +79,8 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        {/* --- FIX: Made the SheetContent wider for a better layout --- */}
-        <SheetContent className="w-full sm:max-w-5xl overflow-y-auto"> {/* Increased from 4xl to 5xl */}
+        {/* --- FIX: Made the SheetContent wider with forced override --- */}
+        <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
             <SheetDescription>
