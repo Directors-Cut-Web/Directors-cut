@@ -1,9 +1,10 @@
 "use client";
 import { useState } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '@/components/ui/sheet';
-import Veo3PromptForm from '@/components/Veo3PromptForm.tsx';
-import RunwayGen4Form from '@/components/RunwayGen4Form.tsx';
+// --- MODIFICATION: Switched to relative paths to fix Vercel build error ---
+import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
+import Veo3PromptForm from '../components/Veo3PromptForm.tsx';
+import RunwayGen4Form from '../components/RunwayGen4Form.tsx';
 
 // Define the structure for each AI model's card
 const studioModels = [
