@@ -27,7 +27,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
-import { StudioLayout } from './StudioLayout';
+// --- FINAL FIX: Correctly importing the one true StudioLayout ---
+import { StudioLayout } from '../StudioLayout';
+
+// ... (rest of the file is the same as your last working version) ...
 
 // --- Helper Components ---
 
@@ -164,7 +167,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setIsDialogOpen(false);
   };
 
-  // --- MODIFICATION: Rewrote function to correctly handle async logic ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -365,7 +367,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
         <StudioLayout
           controls={formControls}
           preview={rightPanel}
-          tips={<></>} // Tips are now part of the rightPanel, so this is empty
         />
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>

@@ -1,9 +1,8 @@
 "use client";
 import { useState, useRef } from "react";
-import { Target, Lightbulb, Copy, Sparkles, RotateCcw, BookOpen, Upload, Loader2, Camera, Wand2 } from "lucide-react";
+import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectTrigger,
@@ -20,7 +19,8 @@ import {
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Slider } from "@/components/ui/slider";
-import { StudioLayout } from './StudioLayout';
+// --- FINAL FIX: Correctly importing the one true StudioLayout ---
+import { StudioLayout } from '../StudioLayout';
 
 // --- Options ---
 const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
