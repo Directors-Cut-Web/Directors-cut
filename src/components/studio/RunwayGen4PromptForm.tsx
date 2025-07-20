@@ -1,26 +1,42 @@
 "use client";
 import { useState, useRef } from "react";
-import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera } from "lucide-react";
-import { Textarea } from "@/components/ui/textarea";
-import { Button } from "@/components/ui/button";
+// --- FIX: Added missing Lightbulb icon ---
+import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb } from "lucide-react";
+// --- FIX: Replaced all @/ paths with relative paths ---
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Label } from "@/components/ui/label";
+} from "../ui/select";
+import { Label } from "../ui/label";
 import {
   Card,
   CardContent,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Slider } from "@/components/ui/slider";
-// --- FINAL FIX: Correctly importing the one true StudioLayout ---
+} from "../ui/card";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Slider } from "../ui/slider";
 import { StudioLayout } from '../StudioLayout';
+
+// --- FIX: Added missing SelectField helper component ---
+const SelectField = ({ label, placeholder, value, onChange, options }: { label: string, placeholder: string, value: string, onChange: (value: string) => void, options: string[] }) => (
+    <div className="space-y-1.5">
+      <Label htmlFor={label}>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={label}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
 // --- Options ---
 const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
@@ -29,7 +45,7 @@ const cameraMotionOptions = ["Pan Left", "Pan Right", "Tilt Up", "Tilt Down", "D
 
 
 // --- Main Component ---
-export default function RunwayGen4Form({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
+export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
   const [genre, setGenre] = useState("Fantasy");
   const [motionDescription, setMotionDescription] = useState("");
   const [style, setStyle] = useState("Cinematic");

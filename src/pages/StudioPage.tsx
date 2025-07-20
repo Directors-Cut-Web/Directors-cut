@@ -1,29 +1,36 @@
 "use client";
-import { useState } from 'react';
-// --- FINAL FIX: Co-locating files and using direct './' paths ---
+// --- FINAL FIX: Using React.lazy for dynamic imports to solve Vercel build error ---
+import React, { useState, Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
-import Veo3PromptForm from './Veo3PromptForm.tsx';
-import RunwayGen4Form from './RunwayGen4Form.tsx';
-// Import other forms here as you activate them, e.g.:
-// import KlingPromptForm from './KlingPromptForm.tsx';
+import { Loader2 } from 'lucide-react';
+
+// Dynamically import the form components. This is the key to fixing the build.
+const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
+const RunwayGen4Form = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 
 // Define the structure for each AI model's card
 const studioModels = [
   { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo-card-image.jpg' },
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4Form, image: '/lovable-uploads/runway-card-image.jpg' },
-  // Add other models here as you build them
   { id: 'kling', name: 'Kling 2.0', description: 'Coming Soon', component: null, image: '/lovable-uploads/kling-card-image.jpg' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma-card-image.jpg' },
   { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse-card-image.jpg' },
   { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney-card-image.jpg' },
 ];
 
+// A fallback component to show while the form is loading
+const FormLoadingSpinner = () => (
+  <div className="flex items-center justify-center h-64">
+    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+  </div>
+);
+
 export default function StudioPage() {
-  const [selectedModel, setSelectedModel] = useState<typeof studioModels[0] | null>(null);
+  const [selectedModel, setSelectedModel] = useState<any | null>(null);
   const [isSheetOpen, setIsSheetOpen] = useState(false);
 
-  const handleCardClick = (model: typeof studioModels[0]) => {
+  const handleCardClick = (model: any) => {
     if (model.component) {
       setSelectedModel(model);
       setIsSheetOpen(true);
@@ -78,7 +85,9 @@ export default function StudioPage() {
             </SheetDescription>
           </SheetHeader>
           <div className="py-6">
-            {ActiveFormComponent && <ActiveFormComponent onPromptGenerated={handlePromptGenerated} />}
+            <Suspense fallback={<FormLoadingSpinner />}>
+              {ActiveFormComponent && <ActiveFormComponent onPromptGenerated={handlePromptGenerated} />}
+            </Suspense>
           </div>
         </SheetContent>
       </Sheet>
