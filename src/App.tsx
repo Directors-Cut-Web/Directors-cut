@@ -1,8 +1,8 @@
 import { Route, Routes } from 'react-router-dom'
-// --- MODIFICATION: Updated paths to use the '@' alias for reliability ---
-import IndexPage from '@/pages/Index' 
-import StudioPage from '@/pages/StudioPage' 
-import RunwayGen4Form from '@/components/RunwayGen4Form';
+// --- MODIFICATION: Added .tsx extension to fix Vercel build error ---
+import IndexPage from '@/pages/Index.tsx' 
+import StudioPage from '@/pages/StudioPage.tsx' 
+import RunwayGen4Form from '@/components/RunwayGen4Form.tsx';
 
 function App() {
   return (
