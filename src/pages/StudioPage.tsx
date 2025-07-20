@@ -1,10 +1,12 @@
 "use client";
 import { useState } from 'react';
-// --- MODIFICATION: Switched to relative paths to fix Vercel build error ---
+// --- FINAL FIX: Co-locating files and using direct './' paths ---
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
-import Veo3PromptForm from '../components/Veo3PromptForm.tsx';
-import RunwayGen4Form from '../components/RunwayGen4Form.tsx';
+import Veo3PromptForm from './Veo3PromptForm.tsx';
+import RunwayGen4Form from './RunwayGen4Form.tsx';
+// Import other forms here as you activate them, e.g.:
+// import KlingPromptForm from './KlingPromptForm.tsx';
 
 // Define the structure for each AI model's card
 const studioModels = [
@@ -32,8 +34,6 @@ export default function StudioPage() {
 
   const handlePromptGenerated = (prompt: string) => {
     console.log("Final prompt from sheet:", prompt);
-    // You can add logic here to store or display the final prompt
-    // For now, we just close the sheet
     setIsSheetOpen(false);
   };
 
