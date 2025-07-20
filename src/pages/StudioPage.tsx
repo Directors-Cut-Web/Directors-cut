@@ -7,16 +7,17 @@ import { Loader2 } from 'lucide-react';
 
 // Dynamically import the form components. This is the key to fixing the build.
 const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
-const RunwayGen4Form = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
+const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 
 // Define the structure for each AI model's card
+// --- FIX: Corrected the image paths to point to the correct folder ---
 const studioModels = [
-  { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo-card-image.jpg' },
-  { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4Form, image: '/lovable-uploads/runway-card-image.jpg' },
-  { id: 'kling', name: 'Kling 2.0', description: 'Coming Soon', component: null, image: '/lovable-uploads/kling-card-image.jpg' },
-  { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma-card-image.jpg' },
-  { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse-card-image.jpg' },
-  { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney-card-image.jpg' },
+  { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.jpg' },
+  { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.jpg' },
+  { id: 'kling', name: 'Kling 2.0', description: 'Coming Soon', component: null, image: '/lovable-uploads/kling.jpg' },
+  { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma.jpg' },
+  { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse.jpg' },
+  { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.jpg' },
 ];
 
 // A fallback component to show while the form is loading
@@ -77,7 +78,8 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-3xl overflow-y-auto">
+        {/* --- FIX: Made the SheetContent wider for a better layout --- */}
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
             <SheetDescription>
