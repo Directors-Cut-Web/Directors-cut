@@ -112,8 +112,9 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPrompt
   };
 
   return (
-    <>
-      <div className="space-y-6">
+    <div className="flex flex-col md:flex-row gap-6">
+      {/* Left Column: Controls */}
+      <div className="w-full md:w-1/2 space-y-6">
         <Alert>
           <Lightbulb className="h-4 w-4" />
           <AlertTitle>How Runway Works</AlertTitle>
@@ -218,30 +219,62 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPrompt
           />
           <Label htmlFor="runway-upscale">Upscale to 4K</Label>
         </div>
-        <Button
-          onClick={handleGenerateClick}
-          disabled={isLoading || !imagePreview}
-          className="w-full py-6 text-base font-medium mt-4"
-        >
-          {isLoading ? 'Generating...' : '✨ Generate Runway Prompt'}
-        </Button>
-        {finalPrompt && (
-          <div className="space-y-1.5 pt-4">
-            <Label className="font-medium text-lg">Final Runway Prompt</Label>
-            <div className="relative">
-              <Textarea value={finalPrompt} readOnly className="min-h-[100px] pr-10" />
+      </div>
+
+      {/* Right Column: Output and Controls */}
+      <div className="w-full md:w-1/2 space-y-6">
+        <Card>
+          <CardHeader>
+            <CardTitle>Generated Prompt</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Textarea
+                value={finalPrompt}
+                readOnly
+                placeholder="Your generated prompt will appear here..."
+                className="min-h-[200px] w-full"
+              />
               <Button
-                variant="ghost"
-                size="icon"
-                className="absolute top-2 right-2"
-                onClick={() => navigator.clipboard.writeText(finalPrompt)}
+                onClick={handleGenerateClick}
+                disabled={isLoading || !imagePreview}
+                className="w-full py-6 text-base font-medium"
               >
-                <Copy className="h-4 w-4" />
+                {isLoading ? 'Generating...' : '✨ Generate Runway Prompt'}
               </Button>
             </div>
-          </div>
-        )}
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Tips and Tricks</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
+              <li>From Reddit: Use specific lighting terms (e.g., "golden hour") for better cinematic results.</li>
+              <li>From developer docs: Add motion keywords like "slow pan" to enhance animation flow.</li>
+              <li>From knowledge base: Experiment with aspect ratios (e.g., 9:16 for vertical videos) for unique outputs.</li>
+              <li>Community tip: Combine "Photorealistic" style with "Drone Follow Shot" for stunning aerial effects.</li>
+            </ul>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick User Guide</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ol className="list-decimal pl-5 space-y-2 text-sm text-muted-foreground">
+              <li>Upload a high-quality image to serve as the starting point for your animation.</li>
+              <li>Enter a detailed prompt describing your desired scene (e.g., weather, time of day).</li>
+              <li>Adjust style presets and cinematic shot styles to refine the visual tone.</li>
+              <li>Use the camera motion sliders and selects to control movement (e.g., Pan, Zoom).</li>
+              <li>Click the bullseye (<Target className="inline h-3 w-3 stroke-red-600" />) to generate prompt variants if needed.</li>
+              <li>Press "Generate Runway Prompt" to create the final output, which will appear on the right.</li>
+            </ol>
+          </CardContent>
+        </Card>
       </div>
+
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-5xl w-full">
           <DialogHeader>
@@ -262,6 +295,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPrompt
           </div>
         </DialogContent>
       </Dialog>
-    </>
+    </div>
   );
 }
