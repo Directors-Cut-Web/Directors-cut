@@ -1,16 +1,16 @@
 "use client";
 import { useState, useRef } from "react";
 import { Target, Lightbulb, Camera, Copy, Upload } from "lucide-react";
-import { Button } from "../components/ui/button";
-import { Input } from "../components/ui/input";
-import { Label } from "../components/ui/label";
-import { Textarea } from "../components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
-import { Slider } from "../components/ui/slider";
-import { Checkbox } from "../components/ui/checkbox";
-import { Alert, AlertDescription, AlertTitle } from "../components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "../components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../components/ui/dialog";
+import { Button } from "../../components/ui/button";
+import { Input } from "../../components/ui/input";
+import { Label } from "../../components/ui/label";
+import { Textarea } from "../../components/ui/textarea";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../components/ui/select";
+import { Slider } from "../../components/ui/slider";
+import { Checkbox } from "../../components/ui/checkbox";
+import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
+import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
 
 interface RunwayPromptFormProps {
   onPromptGenerated: (prompt: string) => void;
