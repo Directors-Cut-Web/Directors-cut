@@ -16,11 +16,6 @@ interface RunwayPromptFormProps {
   onPromptGenerated: (prompt: string) => void;
 }
 
-const aspectOptions = ["16:9", "9:16", "1:1", "4:3"];
-const styleOptions = ["Cinematic", "Claymation", "Watercolor", "Pixel Art", "Infrared", "Photorealistic"];
-const shotStyleOptions = ["None", "Drone Follow Shot", "FPV Drone Shot", "Sweeping Crane Shot", "Handheld Shaky-Cam", "Low Angle Tracking Shot", "Dolly Zoom"];
-const motionOptions = { Pan: ["None", "Left", "Right"], Tilt: ["None", "Up", "Down"], Roll: ["None", "Clockwise", "Counter-clockwise"], Zoom: ["None", "In", "Out"] };
-
 const SelectField = ({ label, value, set, options }: { label: string, value: string, set: (v: string) => void, options: string[] }) => (
   <div className="space-y-1.5">
     <Label>{label}</Label>
@@ -34,6 +29,17 @@ const SelectField = ({ label, value, set, options }: { label: string, value: str
     </Select>
   </div>
 );
+
+// Options Definitions
+const aspectOptions = ["16:9", "9:16", "1:1", "4:3"];
+const styleOptions = ["Cinematic", "Claymation", "Watercolor", "Pixel Art", "Infrared", "Photorealistic"];
+const shotStyleOptions = ["None", "Drone Follow Shot", "FPV Drone Shot", "Sweeping Crane Shot", "Handheld Shaky-Cam", "Low Angle Tracking Shot", "Dolly Zoom"];
+const motionOptions = {
+  Pan: ["None", "Left", "Right"],
+  Tilt: ["None", "Up", "Down"],
+  Roll: ["None", "Clockwise", "Counter-clockwise"],
+  Zoom: ["None", "In", "Out"]
+};
 
 export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPromptFormProps) {
   const [prompt, setPrompt] = useState("");
@@ -247,30 +253,31 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPrompt
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Tips and Tricks</CardTitle>
+            <CardTitle>Tips & Tricks</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-              <li>From Reddit: Use specific lighting terms (e.g., "golden hour") for better cinematic results.</li>
-              <li>From developer docs: Add motion keywords like "slow pan" to enhance animation flow.</li>
-              <li>From knowledge base: Experiment with aspect ratios (e.g., 9:16 for vertical videos) for unique outputs.</li>
-              <li>Community tip: Combine "Photorealistic" style with "Drone Follow Shot" for stunning aerial effects.</li>
-            </ul>
+          <CardContent className="text-sm space-y-3 text-muted-foreground">
+            <p><strong>Start Simple, Then Refine:</strong> Begin with a basic prompt (e.g., "A man walks through a forest") and enhance with details like "golden hour lighting, slow tracking shot" for precise control.</p>
+            <p><strong>Leverage Reference Images:</strong> Upload 1-3 high-quality images (e.g., a character portrait) to anchor scenes or characters, ensuring consistency across generations.</p>
+            <p><strong>Focus on Motion Details:</strong> Specify clear movements (e.g., "dolly zoom on a running horse") to guide realistic camera or subject motion effectively.</p>
+            <p><strong>Use Positive Descriptions:</strong> Emphasize what to include (e.g., "clear blue sky") over exclusions (e.g., "no clouds") to align with Gen-4’s processing strengths.</p>
+            <p><strong>Incorporate Cinematic Terms:</strong> Add film language like "anamorphic lens" or "volumetric lighting" to achieve a polished, professional aesthetic.</p>
+            <p><strong>Match Aspect Ratios:</strong> Select an aspect ratio (e.g., 16:9 for widescreen, 9:16 for vertical) suited to your target platform to avoid cropping issues.</p>
+            <p><strong>Test with Short Durations:</strong> Generate 5-second clips first, then refine prompts for longer outputs, optimizing resource use.</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Quick User Guide</CardTitle>
+            <CardTitle>User Guide Walkthrough</CardTitle>
           </CardHeader>
-          <CardContent>
-            <ol className="list-decimal pl-5 space-y-2 text-sm text-muted-foreground">
-              <li>Upload a high-quality image to serve as the starting point for your animation.</li>
-              <li>Enter a detailed prompt describing your desired scene (e.g., weather, time of day).</li>
-              <li>Adjust style presets and cinematic shot styles to refine the visual tone.</li>
-              <li>Use the camera motion sliders and selects to control movement (e.g., Pan, Zoom).</li>
-              <li>Click the bullseye (<Target className="inline h-3 w-3 stroke-red-600" />) to generate prompt variants if needed.</li>
-              <li>Press "Generate Runway Prompt" to create the final output, which will appear on the right.</li>
-            </ol>
+          <CardContent className="text-sm space-y-3 text-muted-foreground">
+            <p><strong>Getting Started:</strong> Log into the RunwayGen4 web app, navigate to the "Generate Video" section from the left menu, and click "New Session" to start.</p>
+            <p><strong>Uploading Reference Images:</strong> Click the "Upload Starting Image" area on the left panel, select 1-3 high-quality images (e.g., a scene or character), and wait for them to load as visual anchors.</p>
+            <p><strong>Crafting Your Prompt:</strong> In the "Main Prompt" textarea on the left, enter a detailed description (e.g., "Slow pan: A knight in armor stands on a misty battlefield, soft diffused light"), using the bullseye button for AI-enhanced variants if needed.</p>
+            <p><strong>Adjusting Controls:</strong> Use the dropdowns and sliders on the left (e.g., "Style Preset" to "Cinematic", "Aspect Ratio" to 16:9, "Motion Amount" to 5) to customize the video’s style and movement.</p>
+            <p><strong>Setting Camera Motion:</strong> Fine-tune the "Mechanical Camera Motion" section with options like "Pan" to "Left" or "Zoom" to "In" to control the camera’s behavior.</p>
+            <p><strong>Generating the Video:</strong> Click the "Generate Runway Prompt" button on the right panel to process your input. Monitor the loading indicator and review the generated prompt in the readonly textarea once complete.</p>
+            <p><strong>Reviewing and Adjusting:</strong> Check the output in the right panel’s textarea. Modify the prompt (e.g., add "handheld shaky cam") or use "Start Over" to reset, then regenerate as needed.</p>
+            <p><strong>Saving Your Work:</strong> Copy the final prompt using the copy icon next to the textarea, then download the video (available post-generation) for further editing or sharing.</p>
           </CardContent>
         </Card>
       </div>
