@@ -380,25 +380,32 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <BookOpen className="w-5 h-5" /> Field Guide
-              </CardTitle>
+              <CardTitle>Tips & Tricks</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-              <p><strong>Genre:</strong> Sets the overall mood (e.g., Horror will create tense, scary prompts).</p>
-              <p><strong>Visual Foundation:</strong> The core of your idea. Describe who is in the scene and where it takes place.</p>
-              <p><strong>Cinematic Controls:</strong> Use these to define the visual look. 'Cinematic' style with 'Golden Hour' lighting creates a beautiful, movie-like shot.</p>
-              <p><strong>Audio & Dialogue:</strong> Veo can generate sound! Describe background noises or write exact lines for characters to speak.</p>
+              <p><strong>Build a Story First:</strong> Start with a clear narrative arc (e.g., "A detective uncovers a clue") and expand with character actions and dialogue to guide Veo’s storytelling engine effectively.</p>
+              <p><strong>Enhance with Audio Cues:</strong> Include specific sound descriptions (e.g., "distant thunder, footsteps echoing") to leverage Veo’s audio generation, creating immersive scenes.</p>
+              <p><strong>Use Presets as a Base:</strong> Select a preset (e.g., "Cinematic Vlog") and tweak it with custom prompts to save time while maintaining high-quality outputs.</p>
+              <p><strong>Detail Character Movements:</strong> Specify actions (e.g., "a dancer spins gracefully") to ensure Veo captures dynamic motion, avoiding static poses.</p>
+              <p><strong>Incorporate Film Techniques:</strong> Add terms like "rack focus" or "shallow depth of field" to refine visual style, enhancing cinematic quality.</p>
+              <p><strong>Balance Dialogue and Description:</strong> Limit dialogue to key lines (e.g., "Hero: ‘We’re not alone’") and pair with scene details to avoid overloading the model.</p>
+              <p><strong>Iterate with Variants:</strong> Use the bullseye button to generate multiple character or scene options, refining the best fit before generating the final prompt.</p>
             </CardContent>
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>Tips & Tricks</CardTitle>
+              <CardTitle>User Guide Walkthrough</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-              <p><strong>Show, Don't Tell:</strong> Instead of "he was sad", describe "a single tear rolled down his weathered cheek".</p>
-              <p><strong>Control Time:</strong> Use keywords like `time-lapse` or `ultra slow-motion`.</p>
-              <p><strong>Use Film Language:</strong> Add terms like `lens flare`, `bokeh`, or `grainy 16mm film` for a specific look.</p>
+              <p><strong>Getting Started:</strong> Log into the Veo3 web app, navigate to the "Generate Video" section from the left menu, and click "New Session" to begin.</p>
+              <p><strong>Uploading a Starting Frame:</strong> Click the "AI Scene Detection" upload area on the left panel, select a high-quality image (e.g., a character or setting), and let the AI analyze it to populate character and scene fields.</p>
+              <p><strong>Selecting a Genre and Preset:</strong> Choose a genre (e.g., "Sci-Fi") from the dropdown, then pick a preset (e.g., "Unboxing Demo") to prefill fields with a starting point.</p>
+              <p><strong>Crafting Your Narrative:</strong> In the "Character & Action" and "Scene & Environment" textareas on the left, enter detailed descriptions (e.g., "A robot repairs a spaceship, sparks flying" and "A cluttered workshop with neon lights"), using the bullseye button for AI-enhanced variants if needed.</p>
+              <p><strong>Setting Cinematic Controls:</strong> Adjust the dropdowns on the left (e.g., "Artistic Style" to "Photorealistic", "Camera Motion" to "Tracking Shot") and the duration slider to fine-tune the video’s look and length.</p>
+              <p><strong>Adding Audio and Dialogue:</strong> In the "Audio Description" and "Dialogue" fields, input sounds (e.g., "humming engines, clanking metal") and lines (e.g., "Robot: ‘Repairs complete’") to enhance the narrative.</p>
+              <p><strong>Generating the Video:</strong> Click the "Generate Veo Prompt" button on the right panel to process your input. Monitor the loading indicator and review the generated prompt in the readonly textarea once complete.</p>
+              <p><strong>Reviewing and Adjusting:</strong> Check the output in the right panel’s textarea. Tweak prompts (e.g., add "slow pan" to motion) or use "Start Over" to reset, then regenerate as needed.</p>
+              <p><strong>Saving Your Work:</strong> Copy the final prompt using the copy icon next to the textarea, then download the video (available post-generation) for further editing or sharing.</p>
             </CardContent>
           </Card>
         </div>
