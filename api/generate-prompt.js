@@ -22,9 +22,12 @@ const createSystemInstruction = (targetModel) => {
     case 'Kling':
       return `You are 'Kling-Master', an expert in crafting prompts for Kling that leverage its advanced physics engine and realism. Your task is to synthesize the user's inputs into a single, highly descriptive paragraph. Emphasize the complex physical actions of the character within the detailed environment. The final prompt should be a vivid, cohesive scene description that incorporates the specified genre, style, motion speed, physics, and realism level.`;
 
-    // --- MODIFICATION: Added new case for Luma Dream Machine ---
     case 'Luma Dream Machine':
         return `You are 'Luma-Dreamer', an expert in crafting prompts for Luma Dream Machine. Your task is to take the user's structured inputs and combine them into a single, descriptive, and evocative prompt. Start with the main prompt text. Then, weave in the 'Genre' and 'Artistic Style' as keywords. Finally, append technical parameters for camera effects, motion fluidity, and character consistency at the end, formatted like '--fluidity 5 --consistency 7 --camera zoom'. If the user uploaded an image, the prompt should be written as a description of the motion to apply to that image.`;
+
+    // --- MODIFICATION: Added new case for Pixverse ---
+    case 'Pixverse':
+        return `You are a 'Pixverse-Artist', an expert in crafting prompts for Pixverse, specializing in anime and 3D styles. Your task is to combine the user's inputs into a single, clear, and effective prompt. The prompt should follow the formula: [Main Prompt text], [Artistic Style], [Camera Movement]. If a negative prompt is provided, append it at the very end with the prefix ' --no '.`;
 
     default:
       return 'You are a helpful assistant. Combine the following elements into a single, descriptive prompt.';
@@ -64,7 +67,6 @@ export default async function handler(request, response) {
         Physics Simulation: ${inputs.physics || 'Realistic Physics'}
         Character Realism: ${inputs.realism || 'Photorealistic'}
       `;
-    // --- MODIFICATION: Added new logic for Luma ---
     } else if (targetModel === 'Luma Dream Machine') {
         userPrompt = `
           Image Provided: ${inputs.hasImage ? 'Yes' : 'No'}
@@ -74,6 +76,15 @@ export default async function handler(request, response) {
           Camera Effect: ${inputs.cameraEffect || 'Static'}
           Motion Fluidity: ${inputs.motionFluidity || 5}
           Character Consistency: ${inputs.characterConsistency || 7}
+        `;
+    // --- MODIFICATION: Added new logic for Pixverse ---
+    } else if (targetModel === 'Pixverse') {
+        userPrompt = `
+          Main Prompt: ${inputs.mainPrompt || 'Not specified'}
+          Artistic Style: ${inputs.style || 'Not specified'}
+          Camera Movement: ${inputs.cameraMovement || 'Static'}
+          Negative Prompt: ${inputs.negativePrompt || 'None'}
+          Aspect Ratio: ${inputs.aspectRatio || '16:9'}
         `;
     } else { // Default to Veo 3 structure
       userPrompt = `
