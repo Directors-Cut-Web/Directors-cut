@@ -1,14 +1,15 @@
 "use client";
-// --- FINAL FIX: Using React.lazy for dynamic imports to solve Vercel build error ---
 import React, { useState, Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
 import { Loader2 } from 'lucide-react';
 
-// Dynamically import the form components. This is the key to fixing the build.
+// Dynamically import the form components
 const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
+// --- MODIFICATION: Added the new Luma form ---
+const LumaDreamMachinePromptForm = React.lazy(() => import('../components/studio/LumaDreamMachinePromptForm.tsx'));
 
 
 // Define the structure for each AI model's card
@@ -16,7 +17,8 @@ const studioModels = [
   { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.png' },
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png' },
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
-  { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma.png' },
+  // --- MODIFICATION: Activated the Luma card ---
+  { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
   { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse.png' },
   { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.png' },
 ];
@@ -79,8 +81,7 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        {/* --- FIX: Using the correct wide class name you identified --- */}
-        <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
+        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
             <SheetDescription>

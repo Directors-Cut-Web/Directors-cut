@@ -1,81 +1,115 @@
 "use client";
-import { useState, useEffect } from "react";
-import { Target, Lightbulb, Copy } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-} from "@/components/ui/dialog";
+import { useState, useRef } from "react";
+import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2, Target, Film } from "lucide-react";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
 import {
   Select,
   SelectTrigger,
   SelectValue,
   SelectContent,
   SelectItem,
-} from "@/components/ui/select";
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { Slider } from "@/components/ui/slider";
-
-interface LumaPromptFormProps {
-  model: string;
-  onPromptGenerated: (prompt: string) => void;
-}
-
-const InlineIcon = <Target className="inline h-3 w-3 stroke-red-600" />;
-
-const PromptField = ({ label, placeholder, value, onChange, onBullseyeClick, description }: { label: string, placeholder: string, value: string, onChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void, onBullseyeClick: () => Promise<void>, description: React.ReactNode }) => (
-  <div className="space-y-1.5">
-    <Label htmlFor={label} className="font-semibold">{label}</Label>
-    <div className="relative">
-      <Textarea id={label} placeholder={placeholder} value={value} onChange={onChange} className="min-h-[80px] pr-10" />
-      <button type="button" onClick={onBullseyeClick} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title={`Enhance ${label} with AI`}>
-        <Target size={20} className="text-red-500" />
-      </button>
-    </div>
-    <p className="text-xs text-muted-foreground pt-1">{description}</p>
-  </div>
-);
+} from "../ui/select";
+import { Label } from "../ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Slider } from "../ui/slider";
+import { StudioLayout } from '../StudioLayout';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
 
 const SelectField = ({ label, placeholder, value, onChange, options }: { label: string, placeholder: string, value: string, onChange: (value: string) => void, options: string[] }) => (
-  <div className="space-y-1.5"><Label htmlFor={label}>{label}</Label><Select value={value} onValueChange={onChange}><SelectTrigger id={label}><SelectValue placeholder={placeholder} /></SelectTrigger><SelectContent>{options.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}</SelectContent></Select></div>
-);
+    <div className="space-y-1.5">
+      <Label htmlFor={label}>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={label}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
-const lightingOptions = ["Cinematic Lighting", "Natural Daylight", "Film Noir", "Golden Hour", "Blue Hour", "High-Key Lighting", "Low-Key Lighting", "Neon Lit", "Dramatic Rim Lighting"];
-const cameraShotOptions = ["Medium Shot", "Close-up", "Extreme Close-up", "Wide Shot", "Establishing Shot", "Full Shot", "Cowboy Shot", "Point of View (POV)"];
-const cameraMotionOptions = ["Static Camera", "Slow Pan Left", "Slow Pan Right", "Tilt Up", "Tilt Down", "Dolly Zoom In", "Handheld Shaky Cam", "Sweeping Aerial Shot"];
-const artisticStyleOptions = ["Photorealistic", "Cinematic 35mm film", "Anime Aesthetic", "Watercolor Style", "Claymation", "Surrealism", "Impressionistic", "Cyberpunk"];
+// --- Options for Luma ---
+const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
+const styleOptionsLuma = ["Photorealistic", "Cinematic", "Anime", "Watercolor", "Minimalist", "Surreal", "3D Render"];
+const cameraEffectsOptions = ["Static", "Pan", "Zoom", "Orbit"];
 
-export default function LumaDreamMachinePromptForm({ onPromptGenerated }: LumaPromptFormProps) {
-  const [character, setCharacter] = useState("");
-  const [scene, setScene] = useState("");
-  const [lighting, setLighting] = useState("");
-  const [cameraShot, setCameraShot] = useState("");
-  const [cameraMotion, setCameraMotion] = useState("");
-  const [style, setStyle] = useState("");
-  const [guidance, setGuidance] = useState(8);
-  const [variants, setVariants] = useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [activeField, setActiveField] = useState<'character' | 'scene' | null>(null);
+// --- Main Component ---
+export default function LumaDreamMachinePromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
+  const [genre, setGenre] = useState("Fantasy");
+  const [mainPrompt, setMainPrompt] = useState("");
+  const [style, setStyle] = useState("Cinematic");
+  const [cameraEffect, setCameraEffect] = useState("Static");
+  const [motionFluidity, setMotionFluidity] = useState(5);
+  const [characterConsistency, setCharacterConsistency] = useState(7);
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [variants, setVariants] = useState<string[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
-  const handleEnhance = async (fieldType: 'character' | 'scene') => {
-    const inputText = fieldType === 'character' ? character : scene;
-    if (!inputText) return alert("Please enter some text before enhancing.");
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImagePreview(URL.createObjectURL(file));
+    setIsLoading(true);
+    setMainPrompt("");
+
+    try {
+      const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+          try {
+            const base64Image = (reader.result as string).split(',')[1];
+            const mimeType = file.type;
+            const response = await fetch('/api/analyze-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64Image, mimeType }),
+            });
+            const data = await response.json();
+            if (!response.ok) { reject(new Error(data.error || 'Failed to analyze image.')); } 
+            else { resolve(data); }
+          } catch (e) { reject(e); }
+        };
+        reader.onerror = (error) => { reject(error); };
+      });
+      const combinedDescription = `${descriptions.characterAndAction} ${descriptions.sceneAndEnvironment}`;
+      setMainPrompt(combinedDescription.trim());
+    } catch (error: any) {
+      console.error("Image analysis failed:", error);
+      alert(`Image analysis failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleEnhance = async () => {
+    if (!mainPrompt) return alert("Please enter a prompt before enhancing.");
     setIsLoading(true);
     try {
-      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ inputText }) });
+      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: mainPrompt }) });
       const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      setVariants(data.variants);
-      setActiveField(fieldType);
+      if (!response.ok) throw new Error(data.message || "An unknown error occurred");
+      setVariants(data.suggestions);
       setIsDialogOpen(true);
-    } catch (error) {
+    } catch (error: any) {
       console.error("Failed to fetch variants:", error);
       alert("Failed to get suggestions. Please try again.");
     } finally {
@@ -83,48 +117,156 @@ export default function LumaDreamMachinePromptForm({ onPromptGenerated }: LumaPr
     }
   };
 
-  const handleVariantSelect = (variant: string) => {
-    if (activeField === 'character') setCharacter(variant);
-    else if (activeField === 'scene') setScene(variant);
-    setIsDialogOpen(false);
-  };
-
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
-    const payload = { targetModel: 'Luma', inputs: { character, scene, lighting, cameraShot, cameraMotion, style, guidance } };
+    const payload = { targetModel: 'Luma Dream Machine', inputs: { genre, mainPrompt, style, cameraEffect, motionFluidity, characterConsistency, hasImage: !!imagePreview } };
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
       onPromptGenerated(data.finalPrompt);
-    } catch (error) {
+    } catch (error: any) {
       alert("Failed to generate the final prompt.");
     } finally {
       setIsLoading(false);
     }
   };
 
+  const handleStartOver = () => {
+    setGenre("Fantasy");
+    setMainPrompt("");
+    setStyle("Cinematic");
+    setCameraEffect("Static");
+    setMotionFluidity(5);
+    setCharacterConsistency(7);
+    setFinalPrompt("");
+    setImagePreview(null);
+  };
+
+  const handleVariantSelect = (variant: string) => {
+    setMainPrompt(variant);
+    setIsDialogOpen(false);
+  };
+
+  const formControls = (
+    <div className="space-y-6">
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> Upload Starting Image (Optional)</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground mb-3">Upload an image to use as a visual reference, or let our AI generate a description for you.</p>
+          <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
+            {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
+            {isLoading && (
+              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                <Loader2 className="h-8 w-8 text-white animate-spin" />
+                <span className="ml-2 text-white">Analyzing Image...</span>
+              </div>
+            )}
+          </div>
+          <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+            {imagePreview ? 'Upload a Different Image' : 'Upload Image'}
+          </Button>
+          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/png, image/jpeg, image/webp" />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle>Main Prompt</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+            <div className="space-y-1.5">
+                <Label htmlFor="main-prompt" className="font-semibold">Describe Your Scene</Label>
+                <div className="relative">
+                    <Textarea id="main-prompt" placeholder="A majestic castle shrouded in fog..." value={mainPrompt} onChange={(e) => setMainPrompt(e.target.value)} className="min-h-[120px] pr-10" />
+                    <button type="button" onClick={handleEnhance} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance with AI">
+                        <Target size={20} className="text-red-500" />
+                    </button>
+                </div>
+            </div>
+        </CardContent>
+      </Card>
+      
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Film className="w-5 h-5" /> Cinematic Controls</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <SelectField label="Genre" placeholder="Genre" value={genre} onChange={setGenre} options={genreOptions} />
+            <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptionsLuma} />
+            <SelectField label="Camera Effect" placeholder="Effect" value={cameraEffect} onChange={setCameraEffect} options={cameraEffectsOptions} />
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Zap className="w-5 h-5" /> Advanced Motion Controls</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
+            <div className="space-y-1.5"><Label>Motion Fluidity (1-10)</Label><Slider min={1} max={10} step={1} value={[motionFluidity]} onValueChange={([v]) => setMotionFluidity(v)} /></div>
+            <div className="space-y-1.5"><Label>Character Consistency (1-10)</Label><Slider min={1} max={10} step={1} value={[characterConsistency]} onValueChange={([v]) => setCharacterConsistency(v)} /></div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+
+  const rightPanel = (
+    <div className="space-y-6">
+      <div className="space-y-1.5">
+        <Label className="font-medium text-lg">Final Luma Prompt</Label>
+        <div className="relative">
+          <Textarea value={finalPrompt || "Fill out the form to generate your prompt..."} readOnly className="min-h-[250px] pr-10" />
+          {finalPrompt && (<Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button>)}
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Luma Prompt'}</Button>
+        <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over"><RotateCcw className="h-5 w-5" /></Button>
+      </div>
+        <Card>
+            <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+                <p><strong>Be Descriptive:</strong> Luma loves detail. Instead of "a car," try "a vintage red convertible driving down a coastal highway at sunset."</p>
+                <p><strong>Use Natural Language:</strong> Speak to the AI conversationally. The bullseye can help you find more poetic and descriptive ways to phrase your ideas.</p>
+                <p><strong>Crank Up Consistency:</strong> For videos featuring a specific person, increase the "Character Consistency" slider to ensure they look the same in every frame.</p>
+                <p><strong>Fluidity is Key:</strong> A higher "Motion Fluidity" value creates smoother, more dream-like movements, which is one of Luma's greatest strengths.</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> User Guide Walkthrough</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+                <p><strong>1. Write or Upload:</strong> Either write a detailed description in the "Main Prompt" box or upload an image and let our AI write one for you.</p>
+                <p><strong>2. Refine with Bullseye:</strong> Click the bullseye icon on the Main Prompt to get three creative alternatives for your description.</p>
+                <p><strong>3. Set the Scene:</strong> Use the "Cinematic Controls" to define the genre, artistic style, and camera movement for your shot.</p>
+                <p><strong>4. Fine-Tune Motion:</strong> Adjust the "Motion Fluidity" and "Character Consistency" sliders to control how realistic and smooth your video will be.</p>
+                <p><strong>5. Generate Your Prompt:</strong> Click the "Generate Luma Prompt" button to have our AI assemble all your inputs into a perfect, native prompt for Luma.</p>
+            </CardContent>
+        </Card>
+    </div>
+  );
+
   return (
     <>
-      <div className="space-y-6">
-        <Alert><Lightbulb className="h-4 w-4" /><AlertTitle>How Luma Works</AlertTitle><AlertDescription>Fill out the fields below and our AI Prompt Engineer will weave them into a perfect, descriptive prompt for Luma.</AlertDescription></Alert>
-        <PromptField label="Character Description" placeholder="Who or what is the focus? e.g. 'A curious fox...'" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
-        <PromptField label="Scene Description" placeholder="Describe the environment... e.g. 'A snowy mountain peak...'" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <SelectField label="Lighting Style" placeholder="Select a lighting style" value={lighting} onChange={setLighting} options={lightingOptions} />
-          <SelectField label="Artistic Style" placeholder="Select an artistic style" value={style} onChange={setStyle} options={artisticStyleOptions} />
-          <SelectField label="Camera Shot" placeholder="Select a shot type" value={cameraShot} onChange={setCameraShot} options={cameraShotOptions} />
-          <SelectField label="Camera Motion" placeholder="Select a camera motion" value={cameraMotion} onChange={setCameraMotion} options={cameraMotionOptions} />
-        </div>
-        <div className="space-y-1.5"><Label className="font-medium">Guidance Scale ({guidance})</Label><p className="text-xs text-muted-foreground">Lower values increase creativity, higher values strictly follow the prompt.</p><Slider min={1} max={20} step={0.5} value={[guidance]} onValueChange={([v]) => setGuidance(v)} className="mt-2" /></div>
-        <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium mt-4">{isLoading ? 'Generating...' : '✨ Enhance and Generate Prompt'}</Button>
-        {finalPrompt && (<div className="space-y-1.5 pt-4"><Label className="font-medium text-lg">Final Luma Prompt</Label><div className="relative"><Textarea value={finalPrompt} readOnly className="min-h-[100px] pr-10" /><Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button></div></div>)}
+      <Alert><Lightbulb className="w-5 h-5" /><AlertTitle>How Luma Works</AlertTitle><AlertDescription>Luma creates beautiful, fluid videos from detailed text prompts and can use images as a strong visual reference.</AlertDescription></Alert>
+      <div className="mt-6">
+        <StudioLayout
+          controls={formControls}
+          preview={rightPanel}
+        />
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]"><DialogHeader><DialogTitle>Choose a Variant</DialogTitle><DialogDescription>Select one of the AI-generated variants below to replace your text.</DialogDescription></DialogHeader><div className="grid gap-4 py-4">{variants.map((variant, index) => (<Button key={index} variant="outline" className="h-auto text-left whitespace-normal justify-start" onClick={() => handleVariantSelect(variant)}>{variant}</Button>))}</div></DialogContent>
+        <DialogContent className="sm:max-w-[625px]">
+            <DialogHeader>
+                <DialogTitle>Choose a Variant</DialogTitle>
+                <DialogDescription>Select one of the AI-generated variants below to replace your text.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                {variants.map((variant, index) => (
+                    <Button key={index} variant="outline" className="h-auto text-left whitespace-normal justify-start" onClick={() => handleVariantSelect(variant)}>
+                        {variant}
+                    </Button>
+                ))}
+            </div>
+        </DialogContent>
       </Dialog>
     </>
   );
-}
+};

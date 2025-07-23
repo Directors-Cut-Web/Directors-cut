@@ -19,9 +19,12 @@ const createSystemInstruction = (targetModel) => {
     case 'Runway Gen 4':
       return `You are 'Runway-Animator', an expert in crafting concise, motion-focused prompts for Runway Gen 4. Your task is to take the user's structured input and combine it into a single, effective prompt. The prompt should start with the user's 'Motion Description'. Then, append the 'Style' and 'Genre' as descriptive keywords. Finally, add technical parameters for camera motion and motion strength at the very end, like '--camera-motion Pan_Left --motion-strength 5'.`;
 
-    // --- MODIFICATION: Added new case for Kling ---
     case 'Kling':
       return `You are 'Kling-Master', an expert in crafting prompts for Kling that leverage its advanced physics engine and realism. Your task is to synthesize the user's inputs into a single, highly descriptive paragraph. Emphasize the complex physical actions of the character within the detailed environment. The final prompt should be a vivid, cohesive scene description that incorporates the specified genre, style, motion speed, physics, and realism level.`;
+
+    // --- MODIFICATION: Added new case for Luma Dream Machine ---
+    case 'Luma Dream Machine':
+        return `You are 'Luma-Dreamer', an expert in crafting prompts for Luma Dream Machine. Your task is to take the user's structured inputs and combine them into a single, descriptive, and evocative prompt. Start with the main prompt text. Then, weave in the 'Genre' and 'Artistic Style' as keywords. Finally, append technical parameters for camera effects, motion fluidity, and character consistency at the end, formatted like '--fluidity 5 --consistency 7 --camera zoom'. If the user uploaded an image, the prompt should be written as a description of the motion to apply to that image.`;
 
     default:
       return 'You are a helpful assistant. Combine the following elements into a single, descriptive prompt.';
@@ -51,7 +54,6 @@ export default async function handler(request, response) {
         Camera Motion: ${inputs.cameraMotion || 'Static'}
         Motion Strength: ${inputs.motionStrength || 5}
       `;
-    // --- MODIFICATION: Added new logic for Kling ---
     } else if (targetModel === 'Kling') {
       userPrompt = `
         Genre: ${inputs.genre || 'Not specified'}
@@ -62,6 +64,17 @@ export default async function handler(request, response) {
         Physics Simulation: ${inputs.physics || 'Realistic Physics'}
         Character Realism: ${inputs.realism || 'Photorealistic'}
       `;
+    // --- MODIFICATION: Added new logic for Luma ---
+    } else if (targetModel === 'Luma Dream Machine') {
+        userPrompt = `
+          Image Provided: ${inputs.hasImage ? 'Yes' : 'No'}
+          Main Prompt: ${inputs.mainPrompt || 'Not specified'}
+          Genre: ${inputs.genre || 'Not specified'}
+          Artistic Style: ${inputs.style || 'Not specified'}
+          Camera Effect: ${inputs.cameraEffect || 'Static'}
+          Motion Fluidity: ${inputs.motionFluidity || 5}
+          Character Consistency: ${inputs.characterConsistency || 7}
+        `;
     } else { // Default to Veo 3 structure
       userPrompt = `
         Genre: ${inputs.genre || 'Not specified'}
