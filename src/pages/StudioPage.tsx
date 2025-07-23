@@ -9,6 +9,7 @@ const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptF
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
 const LumaDreamMachinePromptForm = React.lazy(() => import('../components/studio/LumaDreamMachinePromptForm.tsx'));
+// --- MODIFICATION: Added the new Pixverse form ---
 const PixversePromptForm = React.lazy(() => import('../components/studio/PixversePromptForm.tsx'));
 
 
@@ -18,6 +19,7 @@ const studioModels = [
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png' },
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
+  // --- MODIFICATION: Activated the Pixverse card ---
   { id: 'pixverse', name: 'Pixverse', description: 'Specializes in anime and 3D animation styles.', component: PixversePromptForm, image: '/lovable-uploads/pixverse.png' },
   { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.png' },
 ];
@@ -80,7 +82,7 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        {/* --- FIX: Restored the correct wide class name you wanted --- */}
+        {/* Using the correct wide class name you specified */}
         <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
