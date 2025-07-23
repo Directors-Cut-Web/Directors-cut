@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2 } from "lucide-react";
+import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2, Target } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import {
@@ -20,6 +20,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Slider } from "../ui/slider";
 import { StudioLayout } from '../StudioLayout';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "../ui/dialog";
+
 
 const SelectField = ({ label, placeholder, value, onChange, options }: { label: string, placeholder: string, value: string, onChange: (value: string) => void, options: string[] }) => (
     <div className="space-y-1.5">
@@ -38,7 +46,8 @@ const SelectField = ({ label, placeholder, value, onChange, options }: { label: 
 // --- Options ---
 const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
 const styleOptionsRunway = ["Cinematic", "Photorealistic", "Stop Motion", "Claymation", "Sketch", "Vibrant Color", "Monochromatic", "Surreal"];
-const cameraMotionOptions = ["Pan Left", "Pan Right", "Tilt Up", "Tilt Down", "Dolly In", "Dolly Out", "Static"];
+// --- MODIFICATION: Expanded camera motion options ---
+const cameraMotionOptions = ["Static", "Pan Left", "Pan Right", "Tilt Up", "Tilt Down", "Dolly In", "Dolly Out", "Tracking Shot (Follow)", "Drone Shot", "Vlog Style (Handheld)", "Whip Pan"];
 
 
 // --- Main Component ---
@@ -52,6 +61,10 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // --- MODIFICATION: Added state for bullseye variants ---
+  const [variants, setVariants] = useState<string[]>([]);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+
 
   const presets = {
     'Living Photograph': {
@@ -86,14 +99,13 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
     setMotionStrength(preset.motionStrength || 5);
   };
   
-  // --- MODIFICATION: Updated image upload to include AI analysis ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setImagePreview(URL.createObjectURL(file));
-    setIsLoading(true); // Start loading spinner
-    setMotionDescription(""); // Clear previous description
+    setIsLoading(true); 
+    setMotionDescription(""); 
 
     try {
       const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
@@ -127,7 +139,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
         };
       });
 
-      // Combine the AI descriptions and set them in the motion text area
       const combinedDescription = `${descriptions.characterAndAction} ${descriptions.sceneAndEnvironment}`;
       setMotionDescription(combinedDescription.trim());
 
@@ -135,8 +146,31 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
       console.error("Image analysis failed:", error);
       alert(`Image analysis failed: ${error.message}`);
     } finally {
-      setIsLoading(false); // Stop loading spinner
+      setIsLoading(false); 
     }
+  };
+
+  // --- MODIFICATION: Added handler for bullseye feature ---
+  const handleEnhance = async () => {
+    if (!motionDescription) return alert("Please enter a motion description before enhancing.");
+    setIsLoading(true);
+    try {
+      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: motionDescription }) });
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.message || "An unknown error occurred");
+      setVariants(data.suggestions);
+      setIsDialogOpen(true);
+    } catch (error) {
+      console.error("Failed to fetch variants:", error);
+      alert("Failed to get suggestions. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVariantSelect = (variant: string) => {
+    setMotionDescription(variant);
+    setIsDialogOpen(false);
   };
 
 
@@ -182,7 +216,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
                 <p className="text-sm text-muted-foreground mb-3">Runway brings your still images to life. Upload a high-quality image to begin.</p>
                 <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
                   {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
-                  {/* --- MODIFICATION: Added loading indicator for AI analysis --- */}
                   {isLoading && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                       <Loader2 className="h-8 w-8 text-white animate-spin" />
@@ -219,7 +252,13 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
             <CardContent className="space-y-4">
                 <div className="space-y-1.5">
                     <Label htmlFor="motion-description" className="font-semibold">Describe the Motion (AI-Generated)</Label>
-                    <Textarea id="motion-description" placeholder="Upload an image to generate a description, or write your own..." value={motionDescription} onChange={(e) => setMotionDescription(e.target.value)} className="min-h-[80px]" />
+                    {/* --- MODIFICATION: Added bullseye button to textarea --- */}
+                    <div className="relative">
+                        <Textarea id="motion-description" placeholder="Upload an image to generate a description, or write your own..." value={motionDescription} onChange={(e) => setMotionDescription(e.target.value)} className="min-h-[80px] pr-10" />
+                        <button type="button" onClick={handleEnhance} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance Motion Description with AI">
+                            <Target size={20} className="text-red-500" />
+                        </button>
+                    </div>
                 </div>
                 <SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} />
                 <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptionsRunway} />
@@ -274,6 +313,22 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
           preview={rightPanel}
         />
       </div>
+      {/* --- MODIFICATION: Added Dialog for bullseye variants --- */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+            <DialogHeader>
+                <DialogTitle>Choose a Motion Variant</DialogTitle>
+                <DialogDescription>Select one of the AI-generated variants below to replace your motion description.</DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-4 py-4">
+                {variants.map((variant, index) => (
+                    <Button key={index} variant="outline" className="h-auto text-left whitespace-normal justify-start" onClick={() => handleVariantSelect(variant)}>
+                        {variant}
+                    </Button>
+                ))}
+            </div>
+        </DialogContent>
+      </Dialog>
     </>
   );
 };
