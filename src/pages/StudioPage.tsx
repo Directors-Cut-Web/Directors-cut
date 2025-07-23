@@ -8,7 +8,6 @@ import { Loader2 } from 'lucide-react';
 // Dynamically import the form components. This is the key to fixing the build.
 const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
-// --- MODIFICATION: Added the new Kling form ---
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
 
 
@@ -16,7 +15,6 @@ const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromp
 const studioModels = [
   { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.png' },
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png' },
-  // --- MODIFICATION: Activated the Kling card ---
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Coming Soon', component: null, image: '/lovable-uploads/luma.png' },
   { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse.png' },
@@ -81,6 +79,7 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        {/* --- FIX: Reverted to the last known-good width for the pop-up --- */}
         <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
