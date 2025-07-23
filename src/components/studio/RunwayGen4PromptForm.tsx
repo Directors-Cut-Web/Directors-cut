@@ -46,7 +46,6 @@ const SelectField = ({ label, placeholder, value, onChange, options }: { label: 
 // --- Options ---
 const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
 const styleOptionsRunway = ["Cinematic", "Photorealistic", "Stop Motion", "Claymation", "Sketch", "Vibrant Color", "Monochromatic", "Surreal"];
-// --- MODIFICATION: Expanded camera motion options ---
 const cameraMotionOptions = ["Static", "Pan Left", "Pan Right", "Tilt Up", "Tilt Down", "Dolly In", "Dolly Out", "Tracking Shot (Follow)", "Drone Shot", "Vlog Style (Handheld)", "Whip Pan"];
 
 
@@ -61,7 +60,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  // --- MODIFICATION: Added state for bullseye variants ---
   const [variants, setVariants] = useState<string[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
@@ -150,7 +148,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
     }
   };
 
-  // --- MODIFICATION: Added handler for bullseye feature ---
   const handleEnhance = async () => {
     if (!motionDescription) return alert("Please enter a motion description before enhancing.");
     setIsLoading(true);
@@ -252,7 +249,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
             <CardContent className="space-y-4">
                 <div className="space-y-1.5">
                     <Label htmlFor="motion-description" className="font-semibold">Describe the Motion (AI-Generated)</Label>
-                    {/* --- MODIFICATION: Added bullseye button to textarea --- */}
                     <div className="relative">
                         <Textarea id="motion-description" placeholder="Upload an image to generate a description, or write your own..." value={motionDescription} onChange={(e) => setMotionDescription(e.target.value)} className="min-h-[80px] pr-10" />
                         <button type="button" onClick={handleEnhance} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance Motion Description with AI">
@@ -292,13 +288,24 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
             </Button>
         </div>
         
+        {/* --- MODIFICATION: Added unique User Guide and Tips & Tricks for Runway --- */}
         <Card>
-            <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" />Field Guide</CardTitle></CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> User Guide Walkthrough</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-                <p><strong>Starting Image:</strong> This is the most important element. Runway will animate what's in your picture.</p>
-                <p><strong>Describe the Motion:</strong> Be specific about what should move. "Wind blowing through her hair" is better than just "movement".</p>
-                <p><strong>Camera Motion:</strong> This controls how the "camera" moves. 'Dolly In' creates a dramatic zoom effect.</p>
-                <p><strong>Motion Strength:</strong> A low number (1-3) is for subtle motion. A high number (8-10) is for very dramatic movement.</p>
+                <p><strong>1. Uploading a Starting Image:</strong> Click the upload area and select a high-quality image. Our AI will automatically analyze it and generate a starting point for your motion description.</p>
+                <p><strong>2. Selecting a Genre and Preset:</strong> Choose a genre to set the mood, or pick a preset like "Living Photograph" to prefill all the fields with a great starting point.</p>
+                <p><strong>3. Crafting Your Motion:</strong> Refine the AI-generated text in the "Describe the Motion" box. Be specific about what should move (e.g., "her hair blows in the wind"). Use the bullseye for creative alternatives.</p>
+                <p><strong>4. Setting Cinematic Controls:</strong> Adjust the "Artistic Style" and "Camera Motion" dropdowns. A "Dolly In" with a "Cinematic" style creates a dramatic, movie-like feel.</p>
+                <p><strong>5. Generating the Video Prompt:</strong> Click the "Generate Runway Prompt" button. The final, optimized text prompt will appear in the readonly textarea.</p>
+            </CardContent>
+        </Card>
+        <Card>
+            <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+                <p><strong>Start with a Great Image:</strong> Runway animates your photo. A clear, well-lit image with a distinct subject will produce the best results.</p>
+                <p><strong>Focus on Subtle Motion:</strong> Runway excels at bringing photos to life. Think small: steam from a cup, blinking eyes, rustling leaves. Less is often more.</p>
+                <p><strong>Use Motion Strength Wisely:</strong> A low strength (1-3) is perfect for subtle realism. A high strength (7-10) can create dramatic, sometimes surreal, effects.</p>
+                <p><strong>Iterate with Variants:</strong> Don't just accept the first AI description. Use the bullseye button to explore different ways to describe the motion before generating the final prompt.</p>
             </CardContent>
         </Card>
     </div>
@@ -313,7 +320,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
           preview={rightPanel}
         />
       </div>
-      {/* --- MODIFICATION: Added Dialog for bullseye variants --- */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
             <DialogHeader>
