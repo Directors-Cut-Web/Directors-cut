@@ -1,84 +1,144 @@
 "use client";
 import { useState, useRef } from "react";
-import { Target, Lightbulb, Camera, Copy, Upload } from "lucide-react";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Textarea } from "../../components/ui/textarea";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../components/ui/select";
-import { Slider } from "../../components/ui/slider";
-import { Checkbox } from "../../components/ui/checkbox";
-import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
+import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2 } from "lucide-react";
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import {
+  Select,
+  SelectTrigger,
+  SelectValue,
+  SelectContent,
+  SelectItem,
+} from "../ui/select";
+import { Label } from "../ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "../ui/card";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Slider } from "../ui/slider";
+import { StudioLayout } from '../StudioLayout';
 
-interface RunwayPromptFormProps {
-  onPromptGenerated: (prompt: string) => void;
-}
+const SelectField = ({ label, placeholder, value, onChange, options }: { label: string, placeholder: string, value: string, onChange: (value: string) => void, options: string[] }) => (
+    <div className="space-y-1.5">
+      <Label htmlFor={label}>{label}</Label>
+      <Select value={value} onValueChange={onChange}>
+        <SelectTrigger id={label}>
+          <SelectValue placeholder={placeholder} />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map(option => <SelectItem key={option} value={option}>{option}</SelectItem>)}
+        </SelectContent>
+      </Select>
+    </div>
+  );
 
-const aspectOptions = ["16:9", "9:16", "1:1", "4:3"];
-const styleOptions = ["Cinematic", "Claymation", "Watercolor", "Pixel Art", "Infrared", "Photorealistic"];
-const shotStyleOptions = ["None", "Drone Follow Shot", "FPV Drone Shot", "Sweeping Crane Shot", "Handheld Shaky-Cam", "Low Angle Tracking Shot", "Dolly Zoom"];
-const motionOptions = { Pan: ["None", "Left", "Right"], Tilt: ["None", "Up", "Down"], Roll: ["None", "Clockwise", "Counter-clockwise"], Zoom: ["None", "In", "Out"] };
+// --- Options ---
+const genreOptions = ["Action", "Adventure", "Comedy", "Drama", "Fantasy", "Horror", "Mystery", "Romance", "Sci-Fi", "Thriller"];
+const styleOptionsRunway = ["Cinematic", "Photorealistic", "Stop Motion", "Claymation", "Sketch", "Vibrant Color", "Monochromatic", "Surreal"];
+const cameraMotionOptions = ["Pan Left", "Pan Right", "Tilt Up", "Tilt Down", "Dolly In", "Dolly Out", "Static"];
 
-const SelectField = ({ label, value, set, options }: { label: string, value: string, set: (v: string) => void, options: string[] }) => (
-  <div className="space-y-1.5">
-    <Label>{label}</Label>
-    <Select value={value} onValueChange={set}>
-      <SelectTrigger>
-        <SelectValue placeholder={`Select ${label}`} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map(o => <SelectItem key={o} value={o}>{o}</SelectItem>)}
-      </SelectContent>
-    </Select>
-  </div>
-);
 
-export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPromptFormProps) {
-  const [prompt, setPrompt] = useState("");
-  const [seed, setSeed] = useState<number | null>(null);
-  const [upscale, setUpscale] = useState(false);
-  const [aspect, setAspect] = useState("16:9");
+// --- Main Component ---
+export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
+  const [genre, setGenre] = useState("Fantasy");
+  const [motionDescription, setMotionDescription] = useState("");
   const [style, setStyle] = useState("Cinematic");
-  const [shotStyle, setShotStyle] = useState("None");
-  const [motionAmount, setMotionAmount] = useState(5);
-  const [pan, setPan] = useState("None");
-  const [tilt, setTilt] = useState("None");
-  const [roll, setRoll] = useState("None");
-  const [zoom, setZoom] = useState("None");
+  const [cameraMotion, setCameraMotion] = useState("Static");
+  const [motionStrength, setMotionStrength] = useState(5);
   const [isLoading, setIsLoading] = useState(false);
-  const [variants, setVariants] = useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
-  const handleEnhance = async () => {
-    if (!prompt) return alert("Please enter some text before enhancing.");
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/generate-variants', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ inputText: prompt }),
-      });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message);
-      setVariants(data.variants);
-      setIsDialogOpen(true);
-    } catch (error) {
-      console.error("Failed to fetch variants:", error);
-      alert("Failed to get suggestions. Please try again.");
-    } finally {
-      setIsLoading(false);
+  const presets = {
+    'Living Photograph': {
+      genre: 'Drama',
+      motionDescription: 'Subtle motion in the clouds, steam rising from a coffee cup, a gentle breeze rustling the leaves on a tree.',
+      style: 'Photorealistic',
+      cameraMotion: 'Static',
+      motionStrength: 2,
+    },
+    'Animated Album Cover': {
+      genre: 'Sci-Fi',
+      motionDescription: 'The character\'s hair flows gently, neon lights in the background pulse with a slow rhythm, stars twinkle in the sky.',
+      style: 'Surreal',
+      cameraMotion: 'Dolly In',
+      motionStrength: 4,
+    },
+    'Surreal Dream': {
+      genre: 'Fantasy',
+      motionDescription: 'The landscape slowly morphs and shifts, colors blend into each other, objects float weightlessly.',
+      style: 'Surreal',
+      cameraMotion: 'Pan Left',
+      motionStrength: 7,
     }
   };
 
-  const handleVariantSelect = (variant: string) => {
-    setPrompt(variant);
-    setIsDialogOpen(false);
+  const handlePresetSelect = (presetName: keyof typeof presets) => {
+    const preset = presets[presetName];
+    setGenre(preset.genre || "");
+    setMotionDescription(preset.motionDescription || "");
+    setStyle(preset.style || "");
+    setCameraMotion(preset.cameraMotion || "Static");
+    setMotionStrength(preset.motionStrength || 5);
   };
+  
+  // --- MODIFICATION: Updated image upload to include AI analysis ---
+  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setImagePreview(URL.createObjectURL(file));
+    setIsLoading(true); // Start loading spinner
+    setMotionDescription(""); // Clear previous description
+
+    try {
+      const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        
+        reader.onload = async () => {
+          try {
+            const base64Image = (reader.result as string).split(',')[1];
+            const mimeType = file.type;
+
+            const response = await fetch('/api/analyze-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64Image, mimeType }),
+            });
+
+            const data = await response.json();
+            if (!response.ok) {
+              reject(new Error(data.error || 'Failed to analyze image.'));
+            } else {
+              resolve(data);
+            }
+          } catch (e) {
+            reject(e);
+          }
+        };
+
+        reader.onerror = (error) => {
+          reject(error);
+        };
+      });
+
+      // Combine the AI descriptions and set them in the motion text area
+      const combinedDescription = `${descriptions.characterAndAction} ${descriptions.sceneAndEnvironment}`;
+      setMotionDescription(combinedDescription.trim());
+
+    } catch (error) {
+      console.error("Image analysis failed:", error);
+      alert(`Image analysis failed: ${error.message}`);
+    } finally {
+      setIsLoading(false); // Stop loading spinner
+    }
+  };
+
 
   const handleGenerateClick = async () => {
     if (!imagePreview) {
@@ -87,13 +147,9 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPrompt
     }
     setIsLoading(true);
     setFinalPrompt("");
-    const payload = { targetModel: 'Runway Gen4+ Studio', inputs: { prompt, seed, upscale, aspect, style, shotStyle, motionAmount, pan, tilt, roll, zoom, imagePreview } };
+    const payload = { targetModel: 'Runway Gen 4', inputs: { genre, motionDescription, style, cameraMotion, motionStrength } };
     try {
-      const response = await fetch('/api/generate-prompt', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload),
-      });
+      const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
@@ -105,196 +161,119 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: RunwayPrompt
     }
   };
 
-  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setImagePreview(URL.createObjectURL(file));
+  const handleStartOver = () => {
+    setGenre("Fantasy");
+    setMotionDescription("");
+    setStyle("Cinematic");
+    setCameraMotion("Static");
+    setMotionStrength(5);
+    setFinalPrompt("");
+    setImagePreview(null);
   };
 
-  return (
-    <div className="flex flex-col md:flex-row gap-6">
-      {/* Left Column: Controls */}
-      <div className="w-full md:w-1/2 space-y-6">
-        <Alert>
-          <Lightbulb className="h-4 w-4" />
-          <AlertTitle>How Runway Works</AlertTitle>
-          <AlertDescription>Describe your scene, then use the powerful sliders and dropdowns to control the camera and style precisely. Upload an image to animate.</AlertDescription>
-        </Alert>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Upload className="w-5 h-5 text-blue-400" /> Upload Starting Image
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">Runway brings your still images to life. Upload a high-quality image to begin.</p>
-            <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
-              {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
-            </div>
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              {imagePreview ? 'Upload a Different Image' : 'Upload Image'}
-            </Button>
-            <input
-              type="file"
-              ref={fileInputRef}
-              onChange={handleImageUpload}
-              className="hidden"
-              accept="image/png, image/jpeg, image/webp"
-            />
-          </CardContent>
-        </Card>
-        <div className="space-y-1.5">
-          <Label className="font-semibold">Main Prompt</Label>
-          <div className="relative">
-            <Textarea
-              placeholder="e.g., A futuristic city skyline at dusk, raining"
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              className="min-h-[100px] pr-10"
-            />
-            <button
-              type="button"
-              onClick={handleEnhance}
-              className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50"
-              title="Enhance with AI"
-            >
-              <Target size={20} className="text-red-500" />
-            </button>
-          </div>
-          <p className="text-xs text-muted-foreground pt-1">
-            Click the <Target className="inline h-3 w-3 stroke-red-600" /> to generate 3 prompt variants.
-          </p>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <SelectField label="Style Preset" value={style} set={setStyle} options={styleOptions} />
-          <SelectField label="Cinematic Shot Style" value={shotStyle} set={setShotStyle} options={shotStyleOptions} />
-        </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Camera className="w-5 h-5" /> Mechanical Camera Motion
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5">
-              <Label>Amount of Motion (0-10)</Label>
-              <Slider
-                min={0}
-                max={10}
-                step={1}
-                value={[motionAmount]}
-                onValueChange={([v]) => setMotionAmount(v)}
-              />
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <SelectField label="Pan" value={pan} set={setPan} options={motionOptions.Pan} />
-              <SelectField label="Tilt" value={tilt} set={setTilt} options={motionOptions.Tilt} />
-              <SelectField label="Roll" value={roll} set={setRoll} options={motionOptions.Roll} />
-              <SelectField label="Zoom" value={zoom} set={setZoom} options={motionOptions.Zoom} />
-            </div>
-          </CardContent>
-        </Card>
-        <div className="grid grid-cols-2 gap-4">
-          <SelectField label="Aspect Ratio" value={aspect} set={setAspect} options={aspectOptions} />
-          <div className="space-y-1.5">
-            <Label htmlFor="runway-seed">Seed</Label>
-            <Input
-              id="runway-seed"
-              type="number"
-              placeholder="Random"
-              value={seed ?? ""}
-              onChange={(e) => setSeed(e.target.value ? Number.parseInt(e.target.value) : null)}
-            />
-          </div>
-        </div>
-        <div className="flex items-center space-x-2">
-          <Checkbox
-            id="runway-upscale"
-            checked={upscale}
-            onCheckedChange={(c) => setUpscale(Boolean(c))}
-          />
-          <Label htmlFor="runway-upscale">Upscale to 4K</Label>
-        </div>
-      </div>
 
-      {/* Right Column: Output and Controls */}
-      <div className="w-full md:w-1/2 space-y-6">
+  const formControls = (
+    <div className="space-y-6">
         <Card>
-          <CardHeader>
-            <CardTitle>Generated Prompt</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <Textarea
-                value={finalPrompt}
-                readOnly
-                placeholder="Your generated prompt will appear here..."
-                className="min-h-[200px] w-full"
-              />
-              <Button
-                onClick={handleGenerateClick}
-                disabled={isLoading || !imagePreview}
-                className="w-full py-6 text-base font-medium"
-              >
-                {isLoading ? 'Generating...' : '✨ Generate Runway Prompt'}
-              </Button>
-            </div>
-          </CardContent>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> Upload Starting Image</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-sm text-muted-foreground mb-3">Runway brings your still images to life. Upload a high-quality image to begin.</p>
+                <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
+                  {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
+                  {/* --- MODIFICATION: Added loading indicator for AI analysis --- */}
+                  {isLoading && (
+                    <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                      <Loader2 className="h-8 w-8 text-white animate-spin" />
+                      <span className="ml-2 text-white">Analyzing Image...</span>
+                    </div>
+                  )}
+                </div>
+                <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                    {imagePreview ? 'Upload a Different Image' : 'Upload Image'}
+                </Button>
+                <input
+                    type="file"
+                    ref={fileInputRef}
+                    onChange={handleImageUpload}
+                    className="hidden"
+                    accept="image/png, image/jpeg, image/webp"
+                />
+            </CardContent>
         </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Tips and Tricks</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ul className="list-disc pl-5 space-y-2 text-sm text-muted-foreground">
-              <li>From Reddit: Use specific lighting terms (e.g., "golden hour") for better cinematic results.</li>
-              <li>From developer docs: Add motion keywords like "slow pan" to enhance animation flow.</li>
-              <li>From knowledge base: Experiment with aspect ratios (e.g., 9:16 for vertical videos) for unique outputs.</li>
-              <li>Community tip: Combine "Photorealistic" style with "Drone Follow Shot" for stunning aerial effects.</li>
-            </ul>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Quick User Guide</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <ol className="list-decimal pl-5 space-y-2 text-sm text-muted-foreground">
-              <li>Upload a high-quality image to serve as the starting point for your animation.</li>
-              <li>Enter a detailed prompt describing your desired scene (e.g., weather, time of day).</li>
-              <li>Adjust style presets and cinematic shot styles to refine the visual tone.</li>
-              <li>Use the camera motion sliders and selects to control movement (e.g., Pan, Zoom).</li>
-              <li>Click the bullseye (<Target className="inline h-3 w-3 stroke-red-600" />) to generate prompt variants if needed.</li>
-              <li>Press "Generate Runway Prompt" to create the final output, which will appear on the right.</li>
-            </ol>
-          </CardContent>
-        </Card>
-      </div>
 
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-5xl w-full">
-          <DialogHeader>
-            <DialogTitle>Choose a Variant</DialogTitle>
-            <DialogDescription>Select one of the AI-generated variants below to replace your text.</DialogDescription>
-          </DialogHeader>
-          <div className="grid gap-4 py-4">
-            {variants.map((variant, index) => (
-              <Button
-                key={index}
-                variant="outline"
-                className="h-auto text-left whitespace-normal justify-start"
-                onClick={() => handleVariantSelect(variant)}
-              >
-                {variant}
-              </Button>
-            ))}
-          </div>
-        </DialogContent>
-      </Dialog>
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets</CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                <Button variant="outline" onClick={() => handlePresetSelect('Living Photograph')}>Living Photograph</Button>
+                <Button variant="outline" onClick={() => handlePresetSelect('Animated Album Cover')}>Animated Cover</Button>
+                <Button variant="outline" onClick={() => handlePresetSelect('Surreal Dream')}>Surreal Dream</Button>
+            </CardContent>
+        </Card>
+
+        <Card>
+            <CardHeader><CardTitle>Motion & Style</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+                <div className="space-y-1.5">
+                    <Label htmlFor="motion-description" className="font-semibold">Describe the Motion (AI-Generated)</Label>
+                    <Textarea id="motion-description" placeholder="Upload an image to generate a description, or write your own..." value={motionDescription} onChange={(e) => setMotionDescription(e.target.value)} className="min-h-[80px]" />
+                </div>
+                <SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} />
+                <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptionsRunway} />
+            </CardContent>
+        </Card>
+        
+        <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Camera className="w-5 h-5" /> Camera Controls</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+                <SelectField label="Camera Motion" placeholder="Motion" value={cameraMotion} onChange={setCameraMotion} options={cameraMotionOptions} />
+                <div className="space-y-1.5"><Label>Motion Strength (1-10)</Label><Slider min={1} max={10} step={1} value={[motionStrength]} onValueChange={([v]) => setMotionStrength(v)} /></div>
+            </CardContent>
+        </Card>
     </div>
   );
-}
+
+  const rightPanel = (
+    <div className="space-y-6">
+        <div className="space-y-1.5">
+            <Label className="font-medium text-lg">Final Runway Prompt</Label>
+            <div className="relative">
+                <Textarea value={finalPrompt || "Upload an image and click generate..."} readOnly className="min-h-[250px] pr-10" />
+                {finalPrompt && (<Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button>)}
+            </div>
+        </div>
+
+        <div className="flex items-center gap-2">
+            <Button onClick={handleGenerateClick} disabled={isLoading || !imagePreview} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Runway Prompt'}</Button>
+            <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over">
+                <RotateCcw className="h-5 w-5" />
+            </Button>
+        </div>
+        
+        <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" />Field Guide</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+                <p><strong>Starting Image:</strong> This is the most important element. Runway will animate what's in your picture.</p>
+                <p><strong>Describe the Motion:</strong> Be specific about what should move. "Wind blowing through her hair" is better than just "movement".</p>
+                <p><strong>Camera Motion:</strong> This controls how the "camera" moves. 'Dolly In' creates a dramatic zoom effect.</p>
+                <p><strong>Motion Strength:</strong> A low number (1-3) is for subtle motion. A high number (8-10) is for very dramatic movement.</p>
+            </CardContent>
+        </Card>
+    </div>
+  );
+
+  return (
+    <>
+      <Alert><Lightbulb className="h-4 w-4" /><AlertTitle>How Runway Works</AlertTitle><AlertDescription>Runway excels at Image-to-Video. Provide a starting image and describe the motion you want to see.</AlertDescription></Alert>
+      <div className="mt-6">
+        <StudioLayout
+          controls={formControls}
+          preview={rightPanel}
+        />
+      </div>
+    </>
+  );
+};
