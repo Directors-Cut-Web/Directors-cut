@@ -2,13 +2,46 @@
 import React, { useState, Suspense } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/card';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
-import { Loader2 } from 'lucide-react';
+import { Loader2, AlertTriangle } from 'lucide-react';
+
+// --- FIX: Added a React Error Boundary to catch rendering errors ---
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    // Update state so the next render will show the fallback UI.
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    // You can also log the error to an error reporting service
+    console.error("Caught an error in a component:", error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      // You can render any custom fallback UI
+      return (
+        <div className="flex flex-col items-center justify-center h-64 text-red-500">
+          <AlertTriangle className="h-8 w-8 mb-2" />
+          <h2 className="text-lg font-semibold">Something went wrong.</h2>
+          <p className="text-sm text-muted-foreground">The component could not be loaded. Please check the console for errors.</p>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 
 // Dynamically import the form components
 const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
-// --- MODIFICATION: Added the new Luma form ---
 const LumaDreamMachinePromptForm = React.lazy(() => import('../components/studio/LumaDreamMachinePromptForm.tsx'));
 
 
@@ -17,7 +50,6 @@ const studioModels = [
   { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.png' },
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png' },
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
-  // --- MODIFICATION: Activated the Luma card ---
   { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
   { id: 'pixverse', name: 'Pixverse', description: 'Coming Soon', component: null, image: '/lovable-uploads/pixverse.png' },
   { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.png' },
@@ -81,7 +113,8 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        <SheetContent className="w-full sm:max-w-4xl overflow-y-auto">
+        {/* --- FIX: Restored the correct wide class name you wanted --- */}
+        <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
             <SheetDescription>
@@ -89,9 +122,11 @@ export default function StudioPage() {
             </SheetDescription>
           </SheetHeader>
           <div className="py-6">
-            <Suspense fallback={<FormLoadingSpinner />}>
-              {ActiveFormComponent && <ActiveFormComponent onPromptGenerated={handlePromptGenerated} />}
-            </Suspense>
+            <ErrorBoundary>
+              <Suspense fallback={<FormLoadingSpinner />}>
+                {ActiveFormComponent && <ActiveFormComponent onPromptGenerated={handlePromptGenerated} />}
+              </Suspense>
+            </ErrorBoundary>
           </div>
         </SheetContent>
       </Sheet>
