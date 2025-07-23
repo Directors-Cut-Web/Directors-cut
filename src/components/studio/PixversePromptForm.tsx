@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { Copy, Sparkles, RotateCcw, BookOpen, Camera, Lightbulb, Loader2, Target, Film } from "lucide-react";
+import { Copy, Sparkles, RotateCcw, BookOpen, Camera, Lightbulb, Loader2, Target, Film, Zap, Wind } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -19,6 +19,7 @@ import {
   CardTitle,
 } from "../ui/card";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Slider } from "../ui/slider";
 import { StudioLayout } from '../StudioLayout';
 import {
   Dialog,
@@ -42,37 +43,51 @@ const SelectField = ({ label, placeholder, value, onChange, options }: { label: 
     </div>
   );
 
-// --- Options for Pixverse ---
-const styleOptionsPixverse = ["Realistic", "Anime", "3D Animation", "Comic", "Cyberpunk"];
+// --- Options for Pixverse, based on your research ---
+const styleOptionsPixverse = ["Realistic", "Anime", "3D Animation", "Cyberpunk", "Comic"];
 const cameraMovementOptions = [
-    "Static", "Zoom In", "Zoom Out", "Pan Left", "Pan Right", "Tilt Up", "Tilt Down", 
-    "Crane Up", "Quickly Zoom In", "Quickly Zoom Out", "Smooth Zoom In", 
-    "Camera Rotation", "Robo Arm", "Super Dolly Out", "Whip Pan", "Hitchcock", 
-    "Left Follow", "Right Follow", "Fixed Background"
+    "Static", "Pan", "Tilt", "Zoom", "Dolly", "Wide Shot", "Aerial Shot", "Tracking Shot", 
+    "Crane Up", "Quickly Zoom In", "Smooth Zoom In", "Camera Rotation", "Robo Arm", 
+    "Whip Pan", "Hitchcock"
 ];
+const lightingOptions = ["Natural Lighting", "Warm Lighting", "Dramatic Lighting", "Soft Lighting", "Sunset Glow"];
+const motionModeOptions = ["Normal Mode", "Performance Mode (Fast)"];
+const physicsOptions = ["Realistic Physics", "Exaggerated Physics"];
 const aspectRatioOptions = ["16:9", "9:16", "1:1", "4:3", "3:4"];
-
 
 // --- Main Component ---
 export default function PixversePromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
-  const [mainPrompt, setMainPrompt] = useState("");
+  const [characterPrompt, setCharacterPrompt] = useState("");
+  const [scenePrompt, setScenePrompt] = useState("");
+  const [detailsPrompt, setDetailsPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
   const [style, setStyle] = useState("Anime");
   const [cameraMovement, setCameraMovement] = useState("Static");
+  const [lighting, setLighting] = useState("Natural Lighting");
+  const [motionStrength, setMotionStrength] = useState(5);
+  const [motionMode, setMotionMode] = useState("Normal Mode");
+  const [physics, setPhysics] = useState("Realistic Physics");
   const [aspectRatio, setAspectRatio] = useState("16:9");
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
   const [variants, setVariants] = useState<string[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [activeField, setActiveField] = useState<'character' | 'scene' | 'details' | null>(null);
 
-  const handleEnhance = async () => {
-    if (!mainPrompt) return alert("Please enter a prompt before enhancing.");
+  const handleEnhance = async (fieldType: 'character' | 'scene' | 'details') => {
+    let inputText = "";
+    if (fieldType === 'character') inputText = characterPrompt;
+    else if (fieldType === 'scene') inputText = scenePrompt;
+    else inputText = detailsPrompt;
+
+    if (!inputText) return alert("Please enter some text before enhancing.");
     setIsLoading(true);
     try {
-      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: mainPrompt }) });
+      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "An unknown error occurred");
       setVariants(data.suggestions);
+      setActiveField(fieldType);
       setIsDialogOpen(true);
     } catch (error: any) {
       console.error("Failed to fetch variants:", error);
@@ -85,7 +100,10 @@ export default function PixversePromptForm({ onPromptGenerated }: { onPromptGene
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
-    const payload = { targetModel: 'Pixverse', inputs: { mainPrompt, negativePrompt, style, cameraMovement, aspectRatio } };
+    const payload = { 
+      targetModel: 'Pixverse', 
+      inputs: { characterPrompt, scenePrompt, detailsPrompt, negativePrompt, style, cameraMovement, lighting, motionStrength, motionMode, physics, aspectRatio } 
+    };
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
@@ -100,49 +118,72 @@ export default function PixversePromptForm({ onPromptGenerated }: { onPromptGene
   };
 
   const handleStartOver = () => {
-    setMainPrompt("");
+    setCharacterPrompt("");
+    setScenePrompt("");
+    setDetailsPrompt("");
     setNegativePrompt("");
     setStyle("Anime");
     setCameraMovement("Static");
+    setLighting("Natural Lighting");
+    setMotionStrength(5);
+    setMotionMode("Normal Mode");
+    setPhysics("Realistic Physics");
     setAspectRatio("16:9");
     setFinalPrompt("");
   };
 
   const handleVariantSelect = (variant: string) => {
-    setMainPrompt(variant);
+    if (activeField === 'character') setCharacterPrompt(variant);
+    else if (activeField === 'scene') setScenePrompt(variant);
+    else if (activeField === 'details') setDetailsPrompt(variant);
     setIsDialogOpen(false);
   };
 
   const formControls = (
     <div className="space-y-6">
       <Card>
-        <CardHeader><CardTitle>Main Prompt</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader><CardTitle>Core Prompt Elements</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
             <div className="space-y-1.5">
-                <Label htmlFor="main-prompt" className="font-semibold">Describe Your Video Scene</Label>
+                <Label htmlFor="character-prompt" className="font-semibold">Character & Action</Label>
                 <div className="relative">
-                    <Textarea id="main-prompt" placeholder="A girl with long, flowing hair stands on a cliff overlooking a stormy sea..." value={mainPrompt} onChange={(e) => setMainPrompt(e.target.value)} className="min-h-[120px] pr-10" />
-                    <button type="button" onClick={handleEnhance} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance with AI">
-                        <Target size={20} className="text-red-500" />
-                    </button>
+                    <Textarea id="character-prompt" placeholder="a futuristic soldier dodging laser fire" value={characterPrompt} onChange={(e) => setCharacterPrompt(e.target.value)} className="min-h-[80px] pr-10" />
+                    <button type="button" onClick={() => handleEnhance('character')} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance with AI"><Target size={20} className="text-red-500" /></button>
                 </div>
-                 <p className="text-xs text-muted-foreground pt-1">Use the formula: Subject + Description + Action + Environment.</p>
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="scene-prompt" className="font-semibold">Scene & Environment</Label>
+                <div className="relative">
+                    <Textarea id="scene-prompt" placeholder="a war-torn cityscape at dusk with smoke billowing" value={scenePrompt} onChange={(e) => setScenePrompt(e.target.value)} className="min-h-[80px] pr-10" />
+                    <button type="button" onClick={() => handleEnhance('scene')} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance with AI"><Target size={20} className="text-red-500" /></button>
+                </div>
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="details-prompt" className="font-semibold">Fine Details & Props</Label>
+                <div className="relative">
+                    <Textarea id="details-prompt" placeholder="bright lanterns hang overhead, soft rain falling" value={detailsPrompt} onChange={(e) => setDetailsPrompt(e.target.value)} className="min-h-[80px] pr-10" />
+                    <button type="button" onClick={() => handleEnhance('details')} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance with AI"><Target size={20} className="text-red-500" /></button>
+                </div>
             </div>
         </CardContent>
       </Card>
       
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Film className="w-5 h-5" /> Style & Scene Controls</CardTitle></CardHeader>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Film className="w-5 h-5" /> Style & Technical Controls</CardTitle></CardHeader>
         <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptionsPixverse} />
+            <SelectField label="Lighting" placeholder="Lighting" value={lighting} onChange={setLighting} options={lightingOptions} />
             <SelectField label="Aspect Ratio" placeholder="Ratio" value={aspectRatio} onChange={setAspectRatio} options={aspectRatioOptions} />
+            <SelectField label="Physics Simulation" placeholder="Physics" value={physics} onChange={setPhysics} options={physicsOptions} />
         </CardContent>
       </Card>
 
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Camera className="w-5 h-5" /> Camera Movement</CardTitle></CardHeader>
-        <CardContent>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Camera className="w-5 h-5" /> Camera & Motion</CardTitle></CardHeader>
+        <CardContent className="space-y-4">
             <SelectField label="Camera Movement" placeholder="Movement" value={cameraMovement} onChange={setCameraMovement} options={cameraMovementOptions} />
+            <SelectField label="Motion Mode" placeholder="Mode" value={motionMode} onChange={setMotionMode} options={motionModeOptions} />
+            <div className="space-y-1.5"><Label>Motion Strength (1-10)</Label><Slider min={1} max={10} step={1} value={[motionStrength]} onValueChange={([v]) => setMotionStrength(v)} /></div>
         </CardContent>
       </Card>
 
@@ -183,11 +224,11 @@ export default function PixversePromptForm({ onPromptGenerated }: { onPromptGene
         <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> User Guide Walkthrough</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-                <p><strong>1. Craft Your Scene:</strong> In the "Main Prompt" box, describe the video you want to create. Use the bullseye for creative ideas.</p>
-                <p><strong>2. Choose Your Style:</strong> Select your desired "Artistic Style" and "Aspect Ratio." "Anime" is a great starting point for stylized content.</p>
-                <p><strong>3. Direct the Camera:</strong> Pick a "Camera Movement" to add dynamism to your video. "Left Follow" is great for tracking a character.</p>
+                <p><strong>1. Craft Your Narrative:</strong> Use the three core prompt boxes to describe your character, scene, and fine details. Use the bullseye for creative ideas.</p>
+                <p><strong>2. Define the Look:</strong> Use the "Style & Technical Controls" to set the artistic style, lighting, and physics of your world.</p>
+                <p><strong>3. Direct the Camera:</strong> Pick a "Camera Movement" and "Motion Mode" to add dynamism to your video. Adjust the strength for subtle or dramatic effects.</p>
                 <p><strong>4. Refine with Negatives:</strong> In the "Negative Prompt" box, list anything you want to avoid in the final video.</p>
-                <p><strong>5. Generate Your Prompt:</strong> Click the "Generate Pixverse Prompt" button. Our AI will combine your inputs into a prompt perfectly formatted for Pixverse.</p>
+                <p><strong>5. Generate Your Prompt:</strong> Click the "Generate Pixverse Prompt" button. Our AI will combine all your inputs into a prompt perfectly formatted for Pixverse.</p>
             </CardContent>
         </Card>
     </div>
