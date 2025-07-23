@@ -1,6 +1,7 @@
 "use client";
 import { useState, useRef } from "react";
-import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2, Target, Film } from "lucide-react";
+// --- FIX: Added the missing 'Zap' icon to the import statement ---
+import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2, Target, Film, Zap } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import {
@@ -245,7 +246,7 @@ export default function LumaDreamMachinePromptForm({ onPromptGenerated }: { onPr
 
   return (
     <>
-      <Alert><Lightbulb className="w-5 h-5" /><AlertTitle>How Luma Works</AlertTitle><AlertDescription>Luma creates beautiful, fluid videos from detailed text prompts and can use images as a strong visual reference.</AlertDescription></Alert>
+      <Alert><Lightbulb className="h-4 w-4" /><AlertTitle>How Luma Works</AlertTitle><AlertDescription>Luma creates beautiful, fluid videos from detailed text prompts and can use images as a strong visual reference.</AlertDescription></Alert>
       <div className="mt-6">
         <StudioLayout
           controls={formControls}
