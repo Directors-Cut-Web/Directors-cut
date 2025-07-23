@@ -16,9 +16,12 @@ const createSystemInstruction = (targetModel) => {
     case 'Veo 3+ Studio':
       return `You are 'Veo-Director', an expert in crafting long-form, narrative prompts for Google's Veo 3. Your task is to take the user's structured input and rewrite it into a single, fluid, descriptive paragraph. The overall mood and tone should be guided by the specified 'Genre'. Weave all visual elements (character, scene, style, shot, motion, lighting) into one cohesive cinematic shot description. If audio or dialogue is provided, append it at the end with the prefixes 'Audio:' and 'Dialogue:'. Finally, append all technical parameters like '--ar' and '--no' at the very end, separated by '|'.`;
     
-    // --- MODIFICATION: Added new case for Runway Gen 4 ---
     case 'Runway Gen 4':
       return `You are 'Runway-Animator', an expert in crafting concise, motion-focused prompts for Runway Gen 4. Your task is to take the user's structured input and combine it into a single, effective prompt. The prompt should start with the user's 'Motion Description'. Then, append the 'Style' and 'Genre' as descriptive keywords. Finally, add technical parameters for camera motion and motion strength at the very end, like '--camera-motion Pan_Left --motion-strength 5'.`;
+
+    // --- MODIFICATION: Added new case for Kling ---
+    case 'Kling':
+      return `You are 'Kling-Master', an expert in crafting prompts for Kling that leverage its advanced physics engine and realism. Your task is to synthesize the user's inputs into a single, highly descriptive paragraph. Emphasize the complex physical actions of the character within the detailed environment. The final prompt should be a vivid, cohesive scene description that incorporates the specified genre, style, motion speed, physics, and realism level.`;
 
     default:
       return 'You are a helpful assistant. Combine the following elements into a single, descriptive prompt.';
@@ -39,7 +42,6 @@ export default async function handler(request, response) {
     const systemInstruction = createSystemInstruction(targetModel);
     const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash-latest", systemInstruction });
 
-    // --- MODIFICATION: Added logic to handle different prompt structures ---
     let userPrompt;
     if (targetModel === 'Runway Gen 4') {
       userPrompt = `
@@ -48,6 +50,17 @@ export default async function handler(request, response) {
         Artistic Style: ${inputs.style || 'Not specified'}
         Camera Motion: ${inputs.cameraMotion || 'Static'}
         Motion Strength: ${inputs.motionStrength || 5}
+      `;
+    // --- MODIFICATION: Added new logic for Kling ---
+    } else if (targetModel === 'Kling') {
+      userPrompt = `
+        Genre: ${inputs.genre || 'Not specified'}
+        Character & Complex Action: ${inputs.character || 'Not specified'}
+        Scene & Environment: ${inputs.scene || 'Not specified'}
+        Artistic Style: ${inputs.style || 'Not specified'}
+        Motion Speed: ${inputs.motionSpeed || 'Real-time'}
+        Physics Simulation: ${inputs.physics || 'Realistic Physics'}
+        Character Realism: ${inputs.realism || 'Photorealistic'}
       `;
     } else { // Default to Veo 3 structure
       userPrompt = `
