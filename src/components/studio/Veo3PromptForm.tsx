@@ -1,15 +1,16 @@
 "use client";
 import { useState, useRef } from "react";
 import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload, Loader2 } from "lucide-react";
-import { Textarea } from "../../components/ui/textarea";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../../components/ui/select";
-import { Label } from "../../components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "../../components/ui/card";
-import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
-import { Slider } from "../../components/ui/slider";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../../components/ui/dialog";
+// --- FIX: Corrected all import paths to be relative from the 'studio' folder ---
+import { Textarea } from "../ui/textarea";
+import { Button } from "../ui/button";
+import { Input } from "../ui/input";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
+import { Label } from "../ui/label";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
+import { Slider } from "../ui/slider";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
 
 const InlineIcon = <Target className="inline h-3 w-3 stroke-red-600" />;
 
@@ -73,6 +74,8 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       genre: 'Comedy',
       character: 'An eccentric alien with shimmering skin, holding a retro microphone, asking passersby about their favorite human food.',
       scene: 'A busy, sun-drenched city sidewalk with a diverse crowd of people walking by, some stopping to look at the camera.',
+      // --- FIX: Added the missing 'style' property ---
+      style: 'Photorealistic',
       shot: 'Medium Close-up',
       motion: 'Handheld Shaky Cam',
       lighting: 'Hard, Direct Light',
@@ -127,7 +130,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       setVariants(data.suggestions);
       setActiveField(fieldType);
       setIsDialogOpen(true);
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Typed the catch block error ---
       console.error("Failed to fetch variants:", error);
       alert("Failed to get suggestions. Please try again.");
     } finally {
@@ -183,7 +186,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       setCharacter(descriptions.characterAndAction || "");
       setScene(descriptions.sceneAndEnvironment || "");
 
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Typed the catch block error ---
       console.error("Image analysis failed:", error);
       alert(`Image analysis failed: ${error.message}`);
     } finally {
@@ -201,7 +204,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
       onPromptGenerated(data.finalPrompt);
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Typed the catch block error ---
       alert("Failed to generate the final prompt.");
     } finally {
       setIsLoading(false);
@@ -394,7 +397,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>User Guide Walkthrough</CardTitle>
+              <CardTitle><BookOpen className="w-5 h-5 inline-block mr-2" />User Guide Walkthrough</CardTitle>
             </CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
               <p><strong>Getting Started:</strong> Log into the Veo3 web app, navigate to the "Generate Video" section from the left menu, and click "New Session" to begin.</p>

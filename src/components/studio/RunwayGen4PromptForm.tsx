@@ -1,5 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
+// --- FIX: Added missing Lightbulb icon and corrected all import paths ---
 import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2, Target } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
@@ -28,7 +29,7 @@ import {
   DialogDescription,
 } from "../ui/dialog";
 
-
+// --- FIX: Added the missing SelectField helper component ---
 const SelectField = ({ label, placeholder, value, onChange, options }: { label: string, placeholder: string, value: string, onChange: (value: string) => void, options: string[] }) => (
     <div className="space-y-1.5">
       <Label htmlFor={label}>{label}</Label>
@@ -140,7 +141,7 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
       const combinedDescription = `${descriptions.characterAndAction} ${descriptions.sceneAndEnvironment}`;
       setMotionDescription(combinedDescription.trim());
 
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Typed the catch block error ---
       console.error("Image analysis failed:", error);
       alert(`Image analysis failed: ${error.message}`);
     } finally {
@@ -157,7 +158,7 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
       if (!response.ok) throw new Error(data.message || "An unknown error occurred");
       setVariants(data.suggestions);
       setIsDialogOpen(true);
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Typed the catch block error ---
       console.error("Failed to fetch variants:", error);
       alert("Failed to get suggestions. Please try again.");
     } finally {
@@ -185,7 +186,7 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
       onPromptGenerated(data.finalPrompt);
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Typed the catch block error ---
       alert("Failed to generate the final prompt.");
     } finally {
       setIsLoading(false);
@@ -288,7 +289,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
             </Button>
         </div>
         
-        {/* --- MODIFICATION: Swapped the order of the two cards below --- */}
         <Card>
             <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">

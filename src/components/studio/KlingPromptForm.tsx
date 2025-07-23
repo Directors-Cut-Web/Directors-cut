@@ -78,7 +78,7 @@ export default function KlingPromptForm({ onPromptGenerated }: { onPromptGenerat
       setVariants(data.suggestions);
       setActiveField(fieldType);
       setIsDialogOpen(true);
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Added 'any' type to error ---
       console.error("Failed to fetch variants:", error);
       alert("Failed to get suggestions. Please try again.");
     } finally {
@@ -113,7 +113,7 @@ export default function KlingPromptForm({ onPromptGenerated }: { onPromptGenerat
       });
       setCharacter(descriptions.characterAndAction || "");
       setScene(descriptions.sceneAndEnvironment || "");
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Added 'any' type to error ---
       console.error("Image analysis failed:", error);
       alert(`Image analysis failed: ${error.message}`);
     } finally {
@@ -131,7 +131,7 @@ export default function KlingPromptForm({ onPromptGenerated }: { onPromptGenerat
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
       onPromptGenerated(data.finalPrompt);
-    } catch (error) {
+    } catch (error: any) { // --- FIX: Added 'any' type to error ---
       alert("Failed to generate the final prompt.");
     } finally {
       setIsLoading(false);
@@ -261,13 +261,11 @@ export default function KlingPromptForm({ onPromptGenerated }: { onPromptGenerat
   return (
     <>
       <Alert><Lightbulb className="h-4 w-4" /><AlertTitle>How Kling Works</AlertTitle><AlertDescription>Kling creates high-fidelity, long-duration videos with a sophisticated understanding of real-world physics and complex motion.</AlertDescription></Alert>
-      <div className="mt-6 container mx-auto p-2 max-w-7xl flex flex-col md:flex-row gap-6">
-        <div className="w-full md:w-2/3 space-y-6">
-          {formControls}
-        </div>
-        <div className="w-full md:w-1/3 space-y-6">
-          {rightPanel}
-        </div>
+      <div className="mt-6">
+        <StudioLayout
+          controls={formControls}
+          preview={rightPanel}
+        />
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
@@ -286,4 +284,4 @@ export default function KlingPromptForm({ onPromptGenerated }: { onPromptGenerat
       </Dialog>
     </>
   );
-}
+};
