@@ -288,7 +288,16 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
             </Button>
         </div>
         
-        {/* --- MODIFICATION: Added unique User Guide and Tips & Tricks for Runway --- */}
+        {/* --- MODIFICATION: Swapped the order of the two cards below --- */}
+        <Card>
+            <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+                <p><strong>Start with a Great Image:</strong> Runway animates your photo. A clear, well-lit image with a distinct subject will produce the best results.</p>
+                <p><strong>Focus on Subtle Motion:</strong> Runway excels at bringing photos to life. Think small: steam from a cup, blinking eyes, rustling leaves. Less is often more.</p>
+                <p><strong>Use Motion Strength Wisely:</strong> A low strength (1-3) is perfect for subtle realism. A high strength (7-10) can create dramatic, sometimes surreal, effects.</p>
+                <p><strong>Iterate with Variants:</strong> Don't just accept the first AI description. Use the bullseye button to explore different ways to describe the motion before generating the final prompt.</p>
+            </CardContent>
+        </Card>
         <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> User Guide Walkthrough</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
@@ -297,15 +306,6 @@ export default function RunwayGen4PromptForm({ onPromptGenerated }: { onPromptGe
                 <p><strong>3. Crafting Your Motion:</strong> Refine the AI-generated text in the "Describe the Motion" box. Be specific about what should move (e.g., "her hair blows in the wind"). Use the bullseye for creative alternatives.</p>
                 <p><strong>4. Setting Cinematic Controls:</strong> Adjust the "Artistic Style" and "Camera Motion" dropdowns. A "Dolly In" with a "Cinematic" style creates a dramatic, movie-like feel.</p>
                 <p><strong>5. Generating the Video Prompt:</strong> Click the "Generate Runway Prompt" button. The final, optimized text prompt will appear in the readonly textarea.</p>
-            </CardContent>
-        </Card>
-        <Card>
-            <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
-            <CardContent className="text-sm space-y-3 text-muted-foreground">
-                <p><strong>Start with a Great Image:</strong> Runway animates your photo. A clear, well-lit image with a distinct subject will produce the best results.</p>
-                <p><strong>Focus on Subtle Motion:</strong> Runway excels at bringing photos to life. Think small: steam from a cup, blinking eyes, rustling leaves. Less is often more.</p>
-                <p><strong>Use Motion Strength Wisely:</strong> A low strength (1-3) is perfect for subtle realism. A high strength (7-10) can create dramatic, sometimes surreal, effects.</p>
-                <p><strong>Iterate with Variants:</strong> Don't just accept the first AI description. Use the bullseye button to explore different ways to describe the motion before generating the final prompt.</p>
             </CardContent>
         </Card>
     </div>
