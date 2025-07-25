@@ -10,6 +10,8 @@ const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/Runwa
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
 const LumaDreamMachinePromptForm = React.lazy(() => import('../components/studio/LumaDreamMachinePromptForm.tsx'));
 const PixversePromptForm = React.lazy(() => import('../components/studio/PixversePromptForm.tsx'));
+// --- MODIFICATION: Added the new Midjourney form ---
+const MidjourneyVideoPromptForm = React.lazy(() => import('../components/studio/MidjourneyVideoPromptForm.tsx'));
 
 
 // Define the structure for each AI model's card
@@ -19,7 +21,8 @@ const studioModels = [
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
   { id: 'pixverse', name: 'Pixverse', description: 'Specializes in anime and 3D animation styles.', component: PixversePromptForm, image: '/lovable-uploads/pixverse.png' },
-  { id: 'midjourney', name: 'Midjourney Video', description: 'Coming Soon', component: null, image: '/lovable-uploads/midjourney.png' },
+  // --- MODIFICATION: Activated the Midjourney card ---
+  { id: 'midjourney', name: 'Midjourney Video', description: 'Animate images with powerful artistic controls.', component: MidjourneyVideoPromptForm, image: '/lovable-uploads/midjourney.png' },
 ];
 
 // A fallback component to show while the form is loading
@@ -80,7 +83,6 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        {/* Using the correct wide class name you specified */}
         <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
