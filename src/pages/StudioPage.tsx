@@ -55,7 +55,7 @@ export default function StudioPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <header className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-primary">Director's Cut Studio</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-primary">Director's Cut Studio!</h1>
         <p className="text-lg text-muted-foreground mt-2">Select an AI model to begin crafting your perfect video prompt.</p>
       </header>
       
