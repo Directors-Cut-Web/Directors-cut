@@ -26,11 +26,11 @@ const createSystemInstruction = (targetModel) => {
         return `You are 'Luma-Dreamer', an expert in crafting prompts for Luma Dream Machine. Your task is to take the user's structured inputs and combine them into a single, descriptive, and evocative prompt. Start with the main prompt text. Then, weave in the 'Genre' and 'Artistic Style' as keywords. Finally, append technical parameters for camera effects, motion fluidity, and character consistency at the end, formatted like '--fluidity 5 --consistency 7 --camera zoom'. If the user uploaded an image, the prompt should be written as a description of the motion to apply to that image.`;
 
     case 'Pixverse':
-        return `You are a 'Pixverse-Artist', an expert in crafting prompts for Pixverse, specializing in anime and 3D styles. Your task is to combine the user's inputs into a single, clear, and effective prompt. The prompt should follow the formula: [Main Prompt text], [Artistic Style], [Camera Movement]. If a negative prompt is provided, append it at the very end with the prefix ' --no '.`;
+        return `You are a 'Pixverse-Artist', an expert in crafting prompts for Pixverse. Your task is to synthesize the user's detailed inputs into a single, cohesive paragraph. Start by weaving together the 'Character & Action', 'Scene & Environment', and 'Fine Details' into a single narrative. Then, append the 'Artistic Style', 'Lighting', and 'Camera Movement' as descriptive keywords. If a negative prompt is provided, append it at the very end with the prefix ' --no '. The final output should be a single, powerful prompt that speaks Pixverse's native language.`;
 
     // --- MODIFICATION: Added new case for Midjourney Video ---
     case 'Midjourney Video':
-        return `You are a 'Midjourney-Maestro', an expert in crafting prompts for Midjourney Video. Your task is to take the user's inputs and assemble them into a single, perfectly formatted Midjourney prompt. The prompt must start with the 'Motion Prompt' text. After the text, append all of the following parameters, each separated by a double-hyphen: --ar, --motion, --stylize, --chaos. If 'Style Raw' is enabled, add '--raw'. If a 'Negative Prompt' exists, add it using '--no'. For example: 'A dragon breathes fire --ar 16:9 --motion high --stylize 250 --chaos 10 --raw --no smoke'.`;
+        return `You are a 'Midjourney-Maestro', an expert in crafting prompts for Midjourney Video. Your task is to take the user's inputs and assemble them into a single, perfectly formatted Midjourney prompt. The prompt must start with the descriptive text, combining Scene, Character, Camera, Lighting, Genre, and Format. After the text, append all of the following parameters, each separated by a space and a double-hyphen: --ar, --motion, --stylize, --chaos. If 'Style Raw' is enabled, add '--raw'. If a 'Negative Prompt' exists, add it using '--no'. If 'cref' or 'sref' URLs exist, add them. For example: 'A dragon breathes fire --ar 16:9 --motion high --stylize 250 --chaos 10 --raw --cref URL --sref URL --no smoke'.`;
 
     default:
       return 'You are a helpful assistant. Combine the following elements into a single, descriptive prompt.';
@@ -82,22 +82,35 @@ export default async function handler(request, response) {
         `;
     } else if (targetModel === 'Pixverse') {
         userPrompt = `
-          Main Prompt: ${inputs.mainPrompt || 'Not specified'}
+          Character & Action: ${inputs.characterPrompt || 'Not specified'}
+          Scene & Environment: ${inputs.scenePrompt || 'Not specified'}
+          Fine Details & Props: ${inputs.detailsPrompt || 'None'}
           Artistic Style: ${inputs.style || 'Not specified'}
+          Lighting: ${inputs.lighting || 'Not specified'}
           Camera Movement: ${inputs.cameraMovement || 'Static'}
-          Negative Prompt: ${inputs.negativePrompt || 'None'}
+          Motion Mode: ${inputs.motionMode || 'Normal'}
+          Motion Strength: ${inputs.motionStrength || 5}
+          Physics Simulation: ${inputs.physics || 'Realistic'}
           Aspect Ratio: ${inputs.aspectRatio || '16:9'}
+          Negative Prompt: ${inputs.negativePrompt || 'None'}
         `;
     // --- MODIFICATION: Added new logic for Midjourney Video ---
     } else if (targetModel === 'Midjourney Video') {
         userPrompt = `
-            Motion Prompt: ${inputs.motionPrompt || 'No motion described.'}
-            Aspect Ratio: ${inputs.aspectRatio || '16:9'}
-            Motion Level: ${inputs.motionLevel || 'Low'}
-            Stylize: ${inputs.stylize || 100}
-            Chaos: ${inputs.chaos || 0}
-            Style Raw: ${inputs.styleRaw ? 'Yes' : 'No'}
-            Negative Prompt: ${inputs.negativePrompt || 'None'}
+            Scene/Environment: ${inputs.scenePrompt || 'Not specified'}
+            Character/Action: ${inputs.characterPrompt || 'Not specified'}
+            Camera Settings: ${inputs.cameraSettingsPrompt || 'Not specified'}
+            Lighting: ${inputs.lightingPrompt || 'Not specified'}
+            Genre/Mood: ${inputs.genrePrompt || 'Not specified'}
+            Format/Technical: ${inputs.formatPrompt || 'Not specified'}
+            --ar: ${inputs.aspectRatio || '16:9'}
+            --motion: ${inputs.motionLevel === 'High Motion' ? 'high' : 'low'}
+            --stylize: ${inputs.stylize || 100}
+            --chaos: ${inputs.chaos || 0}
+            --raw: ${inputs.styleRaw ? 'Yes' : 'No'}
+            --cref: ${inputs.crefUrl || 'None'}
+            --sref: ${inputs.srefUrl || 'None'}
+            --no: ${inputs.negativePrompt || 'None'}
         `;
     } else { // Default to Veo 3 structure
       userPrompt = `

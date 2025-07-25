@@ -83,6 +83,7 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+        {/* Using the correct wide class name you specified */}
         <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>

@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { Copy, Sparkles, RotateCcw, BookOpen, Upload, Camera, Lightbulb, Loader2, Target, Wand2 } from "lucide-react";
+import { Copy, RotateCcw, BookOpen, Camera, Lightbulb, Target, Film, Zap, Wand2, Image as ImageIcon } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -44,89 +44,41 @@ const SelectField = ({ label, placeholder, value, onChange, options }: { label: 
     </div>
   );
 
-// --- Options for Midjourney ---
-const motionLevelOptions = ["Low Motion (Subtle)", "High Motion (Dynamic)"];
-const aspectRatioOptions = ["1:1", "16:9", "9:16", "4:3", "3:4", "2:3", "3:2"];
+// --- Options for Midjourney, based on your research ---
+const cameraAngleOptions = ["Eye-Level", "Low-Angle Shot", "High-Angle Shot", "Over-the-Shoulder", "Dutch Tilt"];
+const cameraMovementOptions = ["Static Camera", "Slow Pan Left", "Zoom In", "Tracking Shot"];
+const framingOptions = ["Wide Shot", "Medium Shot", "Close-up", "Full Shot"];
+const lightingOptions = ["Natural Light", "Rim Lighting", "Soft Light", "Dramatic High-Contrast", "Neon Streetlights"];
+const genreOptions = ["Sci-Fi", "Noir", "Fantasy", "Horror", "Adventure", "Drama"];
+const formatOptions = ["35mm Film", "8K Digital", "VHS Analog", "Hyper-real CGI", "Grainy Texture"];
+const motionLevelOptions = ["Low Motion", "High Motion"];
+const aspectRatioOptions = ["16:9", "9:16", "1:1", "4:3", "3:4", "2:3", "3:2"];
 
 // --- Main Component ---
 export default function MidjourneyVideoPromptForm({ onPromptGenerated }: { onPromptGenerated: (prompt: string) => void; }) {
-  const [motionPrompt, setMotionPrompt] = useState("");
+  const [scenePrompt, setScenePrompt] = useState("");
+  const [characterPrompt, setCharacterPrompt] = useState("");
+  const [cameraSettingsPrompt, setCameraSettingsPrompt] = useState("");
+  const [lightingPrompt, setLightingPrompt] = useState("");
+  const [genrePrompt, setGenrePrompt] = useState("");
+  const [formatPrompt, setFormatPrompt] = useState("");
   const [negativePrompt, setNegativePrompt] = useState("");
-  const [motionLevel, setMotionLevel] = useState("Low Motion (Subtle)");
-  const [stylize, setStylize] = useState(100);
+  const [motionLevel, setMotionLevel] = useState("Low Motion");
+  const [stylize, setStylize] = useState(250);
   const [chaos, setChaos] = useState(0);
-  const [styleRaw, setStyleRaw] = useState(false);
+  const [styleRaw, setStyleRaw] = useState(true);
   const [aspectRatio, setAspectRatio] = useState("16:9");
+  const [crefUrl, setCrefUrl] = useState("");
+  const [srefUrl, setSrefUrl] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [finalPrompt, setFinalPrompt] = useState("");
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [variants, setVariants] = useState<string[]>([]);
-  const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const handleEnhance = async () => {
-    if (!motionPrompt) return alert("Please enter a motion prompt before enhancing.");
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: motionPrompt }) });
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.message || "An unknown error occurred");
-      setVariants(data.suggestions);
-      setIsDialogOpen(true);
-    } catch (error: any) {
-      console.error("Failed to fetch variants:", error);
-      alert("Failed to get suggestions. Please try again.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
-    setImagePreview(URL.createObjectURL(file));
-    setIsLoading(true);
-    setMotionPrompt("");
-    try {
-      const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-          try {
-            const base64Image = (reader.result as string).split(',')[1];
-            const mimeType = file.type;
-            const response = await fetch('/api/analyze-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image: base64Image, mimeType }),
-            });
-            const data = await response.json();
-            if (!response.ok) { reject(new Error(data.error || 'Failed to analyze image.')); } 
-            else { resolve(data); }
-          } catch (e) { reject(e); }
-        };
-        reader.onerror = (error) => { reject(error); };
-      });
-      const combinedDescription = `${descriptions.characterAndAction} ${descriptions.sceneAndEnvironment}`;
-      setMotionPrompt(combinedDescription.trim());
-    } catch (error: any) {
-      console.error("Image analysis failed:", error);
-      alert(`Image analysis failed: ${error.message}`);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
+  
   const handleGenerateClick = async () => {
-    if (!imagePreview) {
-      alert("Please upload a starting image. Midjourney Video requires an image.");
-      return;
-    }
     setIsLoading(true);
     setFinalPrompt("");
     const payload = { 
       targetModel: 'Midjourney Video', 
-      inputs: { motionPrompt, negativePrompt, motionLevel, stylize, chaos, styleRaw, aspectRatio } 
+      inputs: { scenePrompt, characterPrompt, cameraSettingsPrompt, lightingPrompt, genrePrompt, formatPrompt, negativePrompt, motionLevel, stylize, chaos, styleRaw, aspectRatio, crefUrl, srefUrl } 
     };
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
@@ -142,75 +94,81 @@ export default function MidjourneyVideoPromptForm({ onPromptGenerated }: { onPro
   };
 
   const handleStartOver = () => {
-    setMotionPrompt("");
+    setScenePrompt("");
+    setCharacterPrompt("");
+    setCameraSettingsPrompt("");
+    setLightingPrompt("");
+    setGenrePrompt("");
+    setFormatPrompt("");
     setNegativePrompt("");
-    setMotionLevel("Low Motion (Subtle)");
-    setStylize(100);
+    setMotionLevel("Low Motion");
+    setStylize(250);
     setChaos(0);
-    setStyleRaw(false);
+    setStyleRaw(true);
     setAspectRatio("16:9");
+    setCrefUrl("");
+    setSrefUrl("");
     setFinalPrompt("");
-    setImagePreview(null);
-  };
-
-  const handleVariantSelect = (variant: string) => {
-    setMotionPrompt(variant);
-    setIsDialogOpen(false);
   };
 
   const formControls = (
     <div className="space-y-6">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> Upload Starting Image</CardTitle>
-        </CardHeader>
+        <CardHeader><CardTitle>1. Scene & Environment</CardTitle></CardHeader>
         <CardContent>
-          <p className="text-sm text-muted-foreground mb-3">Midjourney Video starts with an image. Upload a frame and let our AI generate a motion description for you.</p>
-          <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
-            {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
-            {isLoading && (
-              <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                <Loader2 className="h-8 w-8 text-white animate-spin" />
-                <span className="ml-2 text-white">Analyzing Image...</span>
-              </div>
-            )}
-          </div>
-          <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-            {imagePreview ? 'Upload a Different Image' : 'Upload Image'}
-          </Button>
-          <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/png, image/jpeg, image/webp" />
+            <Textarea placeholder="A cyberpunk cityscape with towering neon-lit skyscrapers, wet streets reflecting lights..." value={scenePrompt} onChange={(e) => setScenePrompt(e.target.value)} className="min-h-[100px]" />
         </CardContent>
       </Card>
-
       <Card>
-        <CardHeader><CardTitle>Describe the Motion & Action</CardTitle></CardHeader>
-        <CardContent>
-            <div className="space-y-1.5">
-                <Label htmlFor="motion-prompt" className="font-semibold">Motion Prompt (AI-Generated)</Label>
-                <div className="relative">
-                    <Textarea id="motion-prompt" placeholder="Upload an image to generate a description, or write your own..." value={motionPrompt} onChange={(e) => setMotionPrompt(e.target.value)} className="min-h-[120px] pr-10" />
-                    <button type="button" onClick={handleEnhance} className="absolute top-2.5 right-2.5 p-1 rounded-full bg-background/50" title="Enhance with AI"><Target size={20} className="text-red-500" /></button>
-                </div>
-            </div>
+        <CardHeader><CardTitle>2. Character & Action</CardTitle></CardHeader>
+        <CardContent className="space-y-2">
+            <Textarea placeholder="A female cyberpunk hacker with short blue hair, sprinting through an alley..." value={characterPrompt} onChange={(e) => setCharacterPrompt(e.target.value)} className="min-h-[100px]" />
+            <Label htmlFor="cref-url">Character Reference Image URL (--cref)</Label>
+            <Input id="cref-url" placeholder="https://..." value={crefUrl} onChange={(e) => setCrefUrl(e.target.value)} />
         </CardContent>
       </Card>
-      
       <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Wand2 className="w-5 h-5" /> Artistic Controls</CardTitle></CardHeader>
+        <CardHeader><CardTitle>3. Camera Settings</CardTitle></CardHeader>
+        <CardContent className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <SelectField label="Camera Angle" placeholder="Angle" value={cameraSettingsPrompt.split(',')[0] || ""} onChange={(val) => setCameraSettingsPrompt(`${val}, ${cameraSettingsPrompt.split(',')[1] || ''}, ${cameraSettingsPrompt.split(',')[2] || ''}`)} options={cameraAngleOptions} />
+            <SelectField label="Camera Movement" placeholder="Movement" value={cameraSettingsPrompt.split(',')[1]?.trim() || ""} onChange={(val) => setCameraSettingsPrompt(`${cameraSettingsPrompt.split(',')[0] || ''}, ${val}, ${cameraSettingsPrompt.split(',')[2] || ''}`)} options={cameraMovementOptions} />
+            <SelectField label="Framing" placeholder="Framing" value={cameraSettingsPrompt.split(',')[2]?.trim() || ""} onChange={(val) => setCameraSettingsPrompt(`${cameraSettingsPrompt.split(',')[0] || ''}, ${cameraSettingsPrompt.split(',')[1] || ''}, ${val}`)} options={framingOptions} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>4. Lighting</CardTitle></CardHeader>
+        <CardContent>
+            <SelectField label="Lighting Style" placeholder="Lighting" value={lightingPrompt} onChange={setLightingPrompt} options={lightingOptions} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>5. Genre & Mood</CardTitle></CardHeader>
+        <CardContent>
+            <SelectField label="Genre" placeholder="Genre" value={genrePrompt} onChange={setGenrePrompt} options={genreOptions} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle>6. Format & Technical Style</CardTitle></CardHeader>
+        <CardContent>
+            <SelectField label="Format" placeholder="Format" value={formatPrompt} onChange={setFormatPrompt} options={formatOptions} />
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader><CardTitle className="flex items-center gap-2"><Wand2 className="w-5 h-5" /> 7. Style & Parameters</CardTitle></CardHeader>
         <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <SelectField label="Motion Level" placeholder="Motion" value={motionLevel} onChange={setMotionLevel} options={motionLevelOptions} />
+                <SelectField label="Aspect Ratio" placeholder="Ratio" value={aspectRatio} onChange={setAspectRatio} options={aspectRatioOptions} />
+            </div>
             <div className="space-y-1.5"><Label>Stylize (0-1000)</Label><Slider min={0} max={1000} step={1} value={[stylize]} onValueChange={([v]) => setStylize(v)} /></div>
             <div className="space-y-1.5"><Label>Chaos (0-100)</Label><Slider min={0} max={100} step={1} value={[chaos]} onValueChange={([v]) => setChaos(v)} /></div>
-            <div className="flex items-center space-x-2"><Switch id="style-raw" checked={styleRaw} onCheckedChange={setStyleRaw} /><Label htmlFor="style-raw">Use Style Raw</Label></div>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader><CardTitle className="flex items-center gap-2"><Camera className="w-5 h-5" /> Technical Controls</CardTitle></CardHeader>
-        <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SelectField label="Motion Level" placeholder="Motion" value={motionLevel} onChange={setMotionLevel} options={motionLevelOptions} />
-            <SelectField label="Aspect Ratio" placeholder="Ratio" value={aspectRatio} onChange={setAspectRatio} options={aspectRatioOptions} />
-            <div className="space-y-1.5 md:col-span-2">
-                <Label htmlFor="negative-prompt">Negative Prompt</Label>
+            <div className="flex items-center space-x-2"><Switch id="style-raw" checked={styleRaw} onCheckedChange={setStyleRaw} /><Label htmlFor="style-raw">Use Style Raw (--raw)</Label></div>
+            <div className="space-y-1.5">
+                <Label htmlFor="sref-url">Style Reference Image URL (--sref)</Label>
+                <Input id="sref-url" placeholder="https://..." value={srefUrl} onChange={(e) => setSrefUrl(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+                <Label htmlFor="negative-prompt">Negative Prompt (--no)</Label>
                 <Input id="negative-prompt" placeholder="e.g., text, blurry, watermark" value={negativePrompt} onChange={(e) => setNegativePrompt(e.target.value)} />
             </div>
         </CardContent>
@@ -228,26 +186,25 @@ export default function MidjourneyVideoPromptForm({ onPromptGenerated }: { onPro
         </div>
       </div>
       <div className="flex items-center gap-2">
-        <Button onClick={handleGenerateClick} disabled={isLoading || !imagePreview} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Midjourney Prompt'}</Button>
+        <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Midjourney Prompt'}</Button>
         <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over"><RotateCcw className="h-5 w-5" /></Button>
       </div>
         <Card>
             <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-                <p><strong>Focus on Motion:</strong> Your prompt should describe what happens *next*. The image sets the scene; the text sets the action.</p>
-                <p><strong>Use Style Raw for Precision:</strong> If you want the AI to follow your motion prompt very closely without adding its own artistic flair, enable the "Use Style Raw" toggle.</p>
-                <p><strong>Balance Motion Levels:</strong> "Low Motion" is great for subtle, realistic movements. "High Motion" is for big camera pans and action but can sometimes create strange results.</p>
-                <p><strong>Control Variety with Chaos:</strong> A low "Chaos" value (0-10) will produce reliable, similar results. A high value (50+) will create wildly different and unexpected animations.</p>
+                <p><strong>Use References:</strong> Providing a Character Reference (`--cref`) and Style Reference (`--sref`) URL gives Midjourney powerful guidance for consistency.</p>
+                <p><strong>Start Simple:</strong> Begin with just the Scene and Character prompts. Once you get a good result, add more controls like Camera and Lighting to refine it.</p>
+                <p><strong>Balance Stylize:</strong> A lower `--s` value (like 50-150) respects your prompt more literally. A higher value (500+) gives Midjourney more creative freedom.</p>
+                <p><strong>Embrace Chaos:</strong> A small amount of `--chaos` (10-20) can introduce interesting and unexpected variations to your video.</p>
             </CardContent>
         </Card>
         <Card>
             <CardHeader><CardTitle className="flex items-center gap-2"><BookOpen className="w-5 h-5" /> User Guide Walkthrough</CardTitle></CardHeader>
             <CardContent className="text-sm space-y-3 text-muted-foreground">
-                <p><strong>1. Upload Your Image:</strong> Midjourney Video requires a starting image. Upload one and let our AI generate a base motion description for you.</p>
-                <p><strong>2. Describe the Motion:</strong> Refine the AI-generated text in the "Motion Prompt" box. Use the bullseye for creative ideas.</p>
-                <p><strong>3. Set Artistic Controls:</strong> Adjust the "Stylize" and "Chaos" sliders to control how creative or varied the final video will be. Use "Style Raw" for more literal interpretations.</p>
-                <p><strong>4. Define Technicals:</strong> Choose your "Motion Level" and "Aspect Ratio," and add any "Negative Prompts" to exclude unwanted elements.</p>
-                <p><strong>5. Generate Your Prompt:</strong> Click the "Generate Midjourney Prompt" button. Our AI will assemble all your inputs into a perfect, native prompt for Midjourney.</p>
+                <p><strong>1. Build Your Scene:</strong> Fill out the prompt boxes from top to bottom, starting with the Scene and Character, then adding Camera, Lighting, and other details.</p>
+                <p><strong>2. Add References (Optional):</strong> For character and style consistency, paste direct image URLs into the `--cref` and `--sref` input fields.</p>
+                <p><strong>3. Fine-Tune Parameters:</strong> Use the sliders and toggles in the "Style & Parameters" section to control the AI's creativity and technical output.</p>
+                <p><strong>4. Generate Your Prompt:</strong> Click the "Generate Midjourney Prompt" button. Our AI will assemble all your inputs into a single, perfectly formatted prompt string ready for Midjourney.</p>
             </CardContent>
         </Card>
     </div>
@@ -255,28 +212,13 @@ export default function MidjourneyVideoPromptForm({ onPromptGenerated }: { onPro
 
   return (
     <>
-      <Alert><Lightbulb className="w-5 h-5" /><AlertTitle>How Midjourney Video Works</AlertTitle><AlertDescription>Midjourney creates video by animating a starting image. Your prompt should focus on describing the motion and action.</AlertDescription></Alert>
+      <Alert><Lightbulb className="w-5 h-5" /><AlertTitle>How Midjourney Video Works</AlertTitle><AlertDescription>Midjourney creates video by combining a detailed text prompt with powerful parameters. This form helps you build that prompt step-by-step.</AlertDescription></Alert>
       <div className="mt-6">
         <StudioLayout
           controls={formControls}
           preview={rightPanel}
         />
       </div>
-      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-[625px]">
-            <DialogHeader>
-                <DialogTitle>Choose a Motion Variant</DialogTitle>
-                <DialogDescription>Select one of the AI-generated variants below to replace your motion description.</DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4">
-                {variants.map((variant, index) => (
-                    <Button key={index} variant="outline" className="h-auto text-left whitespace-normal justify-start" onClick={() => handleVariantSelect(variant)}>
-                        {variant}
-                    </Button>
-                ))}
-            </div>
-        </DialogContent>
-      </Dialog>
     </>
   );
 };
