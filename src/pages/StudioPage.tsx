@@ -4,13 +4,12 @@ import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/c
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
 import { Loader2 } from 'lucide-react';
 
-// Dynamically import the form components
+// Dynamically import ALL form components.
 const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
 const LumaDreamMachinePromptForm = React.lazy(() => import('../components/studio/LumaDreamMachinePromptForm.tsx'));
 const PixversePromptForm = React.lazy(() => import('../components/studio/PixversePromptForm.tsx'));
-// --- MODIFICATION: Added the new Midjourney form ---
 const MidjourneyVideoPromptForm = React.lazy(() => import('../components/studio/MidjourneyVideoPromptForm.tsx'));
 
 
@@ -21,7 +20,6 @@ const studioModels = [
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
   { id: 'pixverse', name: 'Pixverse', description: 'Specializes in anime and 3D animation styles.', component: PixversePromptForm, image: '/lovable-uploads/pixverse.png' },
-  // --- MODIFICATION: Activated the Midjourney card ---
   { id: 'midjourney', name: 'Midjourney Video', description: 'Animate images with powerful artistic controls.', component: MidjourneyVideoPromptForm, image: '/lovable-uploads/midjourney.png' },
 ];
 
@@ -45,9 +43,10 @@ export default function StudioPage() {
     }
   };
 
+  // --- FINAL FIX: This function no longer closes the sheet, which was the bug ---
   const handlePromptGenerated = (prompt: string) => {
     console.log("Final prompt from sheet:", prompt);
-    setIsSheetOpen(false);
+    // The sheet will now stay open so you can see the result.
   };
 
   const ActiveFormComponent = selectedModel?.component;
@@ -55,7 +54,7 @@ export default function StudioPage() {
   return (
     <div className="container mx-auto p-4 md:p-8">
       <header className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-primary">Director's Cut Studio!</h1>
+        <h1 className="text-4xl md:text-5xl font-bold text-primary">Director's Cut Studio</h1>
         <p className="text-lg text-muted-foreground mt-2">Select an AI model to begin crafting your perfect video prompt.</p>
       </header>
       
@@ -83,7 +82,6 @@ export default function StudioPage() {
       </div>
 
       <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
-        {/* Using the correct wide class name you specified */}
         <SheetContent className="w-full sm:max-w-[1400px] !important overflow-y-auto">
           <SheetHeader>
             <SheetTitle className="text-2xl">{selectedModel?.name} Prompt Studio</SheetTitle>
@@ -101,3 +99,4 @@ export default function StudioPage() {
     </div>
   );
 }
+
