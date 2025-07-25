@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-// --- FIX: Corrected the icon imports based on your screenshot ---
-import { Copy, RotateCcw, BookOpen, Lightbulb, Target, Wand2, Image as ImageIcon, Loader2 } from "lucide-react";
+import { Copy, RotateCcw, BookOpen, Camera, Lightbulb, Target, Wand2, Image as ImageIcon, Loader2 } from "lucide-react";
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -50,7 +49,7 @@ const cameraAngleOptions = ["Eye-Level", "Low-Angle Shot", "High-Angle Shot", "O
 const cameraMovementOptions = ["Static Camera", "Slow Pan Left", "Zoom In", "Tracking Shot"];
 const framingOptions = ["Wide Shot", "Medium Shot", "Close-up", "Full Shot"];
 const lightingOptions = ["Natural Light", "Rim Lighting", "Soft Light", "Dramatic High-Contrast", "Neon Streetlights"];
-const genreOptions = ["Sci-Fi", "Noir", "Fantasy", "Horror", "Adventure", "Drama"];
+const genreOptions = ["Action", "Comedy", "Sci-Fi", "Noir", "Fantasy", "Horror", "Adventure", "Drama"];
 const formatOptions = ["35mm Film", "8K Digital", "VHS Analog", "Hyper-real CGI", "Grainy Texture"];
 const motionLevelOptions = ["Low Motion", "High Motion"];
 const aspectRatioOptions = ["16:9", "9:16", "1:1", "4:3", "3:4", "2:3", "3:2"];
@@ -99,10 +98,46 @@ export default function MidjourneyVideoPromptForm({ onPromptGenerated }: { onPro
     }
   };
   
+  // --- FINAL FIX: Added the full AI analysis logic to the image upload handler ---
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
+
     setImagePreview(URL.createObjectURL(file));
+    setIsLoading(true);
+    setScenePrompt("");
+    setCharacterPrompt("");
+
+    try {
+      const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+          try {
+            const base64Image = (reader.result as string).split(',')[1];
+            const mimeType = file.type;
+            const response = await fetch('/api/analyze-image', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ image: base64Image, mimeType }),
+            });
+            const data = await response.json();
+            if (!response.ok) { reject(new Error(data.error || 'Failed to analyze image.')); } 
+            else { resolve(data); }
+          } catch (e) { reject(e); }
+        };
+        reader.onerror = (error) => { reject(error); };
+      });
+      
+      setScenePrompt(descriptions.sceneAndEnvironment || "");
+      setCharacterPrompt(descriptions.characterAndAction || "");
+
+    } catch (error: any) {
+      console.error("Image analysis failed:", error);
+      alert(`Image analysis failed: ${error.message}`);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleGenerateClick = async () => {
@@ -168,6 +203,7 @@ export default function MidjourneyVideoPromptForm({ onPromptGenerated }: { onPro
                     {isLoading && (
                     <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
                         <Loader2 className="h-8 w-8 text-white animate-spin" />
+                         <span className="ml-2 text-white">Analyzing Image...</span>
                     </div>
                     )}
                 </div>
