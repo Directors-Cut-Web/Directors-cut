@@ -5,8 +5,8 @@ import { Check } from 'lucide-react';
 const MembershipSection = () => {
   const memberships = [
     {
-      name: 'Associate Director',
-      price: '$49',
+      name: 'Director',
+      price: '$29.95',
       period: '/month',
       description: 'Perfect for indie filmmakers and content creators getting started',
       features: [
@@ -20,26 +20,26 @@ const MembershipSection = () => {
       highlighted: false
     },
     {
-      name: 'Director',
-      price: '$149',
-      period: '/month',
-      description: 'For professional directors and production companies',
+      name: 'Associate Director',
+      price: 'from $9.95',
+      period: '/250 Tokens',
+      description: 'For the Indie Directors Just Starting Out',
       features: [
-        'Advanced Script Analysis',
-        'Full Character Development Suite',
-        'Advanced Scene Planning',
-        'Unlimited Projects',
+        'Tokens Never Expire',
+        'No Monthly Renew Fees',
+        'Pay As You Go',
+        'Access to all Features',
         'Priority Support',
-        'Premium Templates',
-        'Budget Estimation Tools',
-        'Crew Management'
+        'Adavanced AI Solution',
+        'Easy to use UI Design',
+        'Full Creative Control'
       ],
       highlighted: true
     },
     {
       name: 'Executive Director',
-      price: '$349',
-      period: '/month',
+      price: '$249.95',
+      period: '/year',
       description: 'Complete studio-grade solution for large productions',
       features: [
         'All Director Features',
