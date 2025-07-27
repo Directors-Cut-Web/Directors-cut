@@ -1,5 +1,3 @@
-// src/pages/Index.tsx
-
 import HeroSection from '@/components/HeroSection';
 import MembershipSection from '@/components/MembershipSection';
 
