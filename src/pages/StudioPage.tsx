@@ -42,7 +42,6 @@ const MidjourneyVideoPromptForm = React.lazy(() => import('../components/studio/
 // Define the structure for each AI model's card
 const studioModels = [
   { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.png' },
-  // --- FINAL FIX: Corrected the video filename to match your file ---
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png', video: '/lovable-uploads/Runway.mp4' },
   { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
@@ -87,7 +86,7 @@ export default function StudioPage() {
           <Card 
             key={model.id} 
             onClick={() => handleCardClick(model)}
-            className="cursor-pointer hover:ring-2 hover:ring-primary transition-all duration-300 overflow-hidden group"
+            className="cursor-pointer hover:ring-2 hover:ring-primary transition-all duration-300 overflow-hidden group relative"
           >
             <div className="h-48 overflow-hidden">
               {model.video ? (
@@ -99,7 +98,6 @@ export default function StudioPage() {
                   className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   key={model.video}
                 >
-                  {/* --- FINAL FIX: Pointing the source to the correct .mp4 file --- */}
                   <source src={model.video} type="video/mp4" />
                   Your browser does not support the video tag.
                 </video>
@@ -112,9 +110,10 @@ export default function StudioPage() {
                 />
               )}
             </div>
-            <CardHeader>
-              <CardTitle>{model.name}</CardTitle>
-              <CardDescription>{model.description}</CardDescription>
+            {/* --- FINAL FIX: Reduced padding (p-3) and softened gradient to make the title box thinner --- */}
+            <CardHeader className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/80 to-transparent p-3">
+              <CardTitle className="text-white">{model.name}</CardTitle>
+              <CardDescription className="text-gray-300 text-sm">{model.description}</CardDescription>
             </CardHeader>
           </Card>
         ))}
