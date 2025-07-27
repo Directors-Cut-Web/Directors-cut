@@ -43,7 +43,7 @@ const MidjourneyVideoPromptForm = React.lazy(() => import('../components/studio/
 const studioModels = [
   { id: 'veo', name: 'Veo 3', description: 'Narrative-driven, cinematic video generation.', component: Veo3PromptForm, image: '/lovable-uploads/veo3.png', video: '/lovable-uploads/Veo3.mp4' },
   { id: 'runway', name: 'Runway Gen 4', description: 'Animate still images with controlled motion.', component: RunwayGen4PromptForm, image: '/lovable-uploads/runway.png', video: '/lovable-uploads/Runway.mp4' },
-  { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png' },
+  { id: 'kling', name: 'Kling 2.0', description: 'High-fidelity video with advanced physics.', component: KlingPromptForm, image: '/lovable-uploads/kling.png', video: '/lovable-uploads/kling.mp4' },
   { id: 'luma', name: 'Luma Dream Machine', description: 'Fluid motion and character consistency.', component: LumaDreamMachinePromptForm, image: '/lovable-uploads/luma.png' },
   { id: 'pixverse', name: 'Pixverse', description: 'Specializes in anime and 3D animation styles.', component: PixversePromptForm, image: '/lovable-uploads/pixverse.png' },
   { id: 'midjourney', name: 'Midjourney Video', description: 'Animate images with powerful artistic controls.', component: MidjourneyVideoPromptForm, image: '/lovable-uploads/midjourney.png' },
