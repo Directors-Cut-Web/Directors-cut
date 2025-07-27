@@ -1,16 +1,11 @@
-import Header from '@/components/Header';
 import HeroSection from '@/components/HeroSection';
 import MembershipSection from '@/components/MembershipSection';
-import Footer from '@/components/Footer';
 
 const Index = () => {
   return (
-    <div className="min-h-screen bg-background">
-      <Header />
+    <div className="flex flex-col min-h-screen">
       <HeroSection />
-      {/* ActionButtons component is correctly removed from the homepage */}
       <MembershipSection />
-      <Footer />
     </div>
   );
 };

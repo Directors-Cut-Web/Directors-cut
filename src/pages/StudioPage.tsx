@@ -4,14 +4,13 @@ import { Card, CardHeader, CardTitle, CardDescription } from '../components/ui/c
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../components/ui/sheet';
 import { Loader2 } from 'lucide-react';
 
-// Dynamically import ALL form components.
+// Dynamically import the form components
 const Veo3PromptForm = React.lazy(() => import('../components/studio/Veo3PromptForm.tsx'));
 const RunwayGen4PromptForm = React.lazy(() => import('../components/studio/RunwayGen4PromptForm.tsx'));
 const KlingPromptForm = React.lazy(() => import('../components/studio/KlingPromptForm.tsx'));
 const LumaDreamMachinePromptForm = React.lazy(() => import('../components/studio/LumaDreamMachinePromptForm.tsx'));
 const PixversePromptForm = React.lazy(() => import('../components/studio/PixversePromptForm.tsx'));
 const MidjourneyVideoPromptForm = React.lazy(() => import('../components/studio/MidjourneyVideoPromptForm.tsx'));
-
 
 // Define the structure for each AI model's card
 const studioModels = [
@@ -43,20 +42,17 @@ export default function StudioPage() {
     }
   };
 
-  // --- FINAL FIX: This function no longer closes the sheet, which was the bug ---
   const handlePromptGenerated = (prompt: string) => {
     console.log("Final prompt from sheet:", prompt);
-    // The sheet will now stay open so you can see the result.
+    setIsSheetOpen(false);
   };
 
   const ActiveFormComponent = selectedModel?.component;
 
   return (
-    <div className="container mx-auto p-4 md:p-8">
-      <header className="text-center mb-12">
-        <h1 className="text-4xl md:text-5xl font-bold text-primary">Director's Cut Studio</h1>
-        <p className="text-lg text-muted-foreground mt-2">Select an AI model to begin crafting your perfect video prompt.</p>
-      </header>
+    <div className="container mx-auto p-4 pt-24 md:p-8"> {/* Adjusted pt-24 to match global header height */}
+      <h1 className="text-4xl md:text-5xl font-bold text-primary text-center mb-12">Director's Cut Studio</h1>
+      <p className="text-lg text-muted-foreground text-center mb-8">Select an AI model to begin crafting your perfect video prompt.</p>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         {studioModels.map((model) => (
@@ -99,4 +95,3 @@ export default function StudioPage() {
     </div>
   );
 }
-
