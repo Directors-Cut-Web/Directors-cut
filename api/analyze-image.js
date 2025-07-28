@@ -1,16 +1,15 @@
-// Forcing a content change to fix Git tracking issue
-// --- NEW VERCEL CONFIGURATION AT THE TOP ---
+// Vercel-specific configuration to increase body size limit
 module.exports.config = {
   api: {
     bodyParser: {
-      sizeLimit: '10mb', // Set the body size limit to 10MB
+      sizeLimit: '10mb',
     },
   },
 };
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// This is our "instruction manual" for the AI.
+// The instruction manual for the AI
 const systemInstruction = `
 You are an expert film director and AI assistant. Your task is to analyze an image and break it down into animatable components.
 You MUST return your response as a single, valid JSON object and nothing else. Do not include any text before or after the JSON object or use markdown like \`\`\`json.
@@ -26,17 +25,14 @@ The JSON object must follow this exact structure:
 }
 `;
 
-// Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// Apply the instructions directly to the model configuration
 const model = genAI.getGenerativeModel({ 
   model: 'gemini-1.5-pro',
   systemInstruction: systemInstruction,
 });
 
-
-// This is the main function handler
+// The main function handler
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
