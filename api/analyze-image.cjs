@@ -1,3 +1,12 @@
+// --- NEW VERCEL CONFIGURATION AT THE TOP ---
+module.exports.config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '10mb', // Set the body size limit to 10MB
+    },
+  },
+};
+
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
 // This is our "instruction manual" for the AI.
@@ -26,6 +35,7 @@ const model = genAI.getGenerativeModel({
 });
 
 
+// This is the main function handler
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
@@ -41,7 +51,6 @@ module.exports = async (req, res) => {
       inlineData: { data: image, mimeType: mimeType },
     };
 
-    // The request to the model is now much simpler
     const result = await model.generateContent([imagePart]);
     const responseText = result.response.text();
 
