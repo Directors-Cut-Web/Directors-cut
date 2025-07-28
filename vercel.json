@@ -6,8 +6,9 @@
     }
   ],
   "functions": {
-    "api/analyze-image.js": {
-      "maxDuration": 45
+    "api/analyze-image.cjs": {
+      "maxDuration": 45,
+      "bodyLimit": "10mb"
     }
   }
 }
