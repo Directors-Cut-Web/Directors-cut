@@ -267,143 +267,147 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
 
   return (
     <>
-      <div className="space-y-6">
-        <Alert>
-          <Lightbulb className="h-4 w-4" />
-          <AlertTitle>How Veo Works</AlertTitle>
-          <AlertDescription>Veo understands complex narratives. Be descriptive and leverage its unique audio and dialogue generation capabilities.</AlertDescription>
-        </Alert>
-
-        <Card>
-          <CardHeader><CardTitle>What type of movie are you creating?</CardTitle></CardHeader>
-          <CardContent><SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} /></CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> AI Scene Detection</CardTitle></CardHeader>
-          <CardContent>
-            <p className="text-sm text-muted-foreground mb-3">Upload a starting frame to automatically detect objects and suggest animations.</p>
-            <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
-              {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
-              {isLoading && (
-                <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 text-white animate-spin" />
-                  <span className="ml-2 text-white">Analyzing...</span>
-                </div>
-              )}
-            </div>
-            <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
-              {imagePreview ? 'Upload a Different Frame' : 'Upload Starting Frame'}
-            </Button>
-            <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/png, image/jpeg, image/webp" />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader><CardTitle>Visual Foundation</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <PromptField label="Character & Action" placeholder="e.g., A brave explorer discovering a hidden waterfall" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
-            <PromptField label="Scene & Environment" placeholder="e.g., A lush, vibrant jungle with bioluminescent plants" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />
-          </CardContent>
-        </Card>
-        
-        {analysisResult && analysisResult.detectedObjects && analysisResult.detectedObjects.length > 0 && (
+      <Alert>
+        <Lightbulb className="h-4 w-4" />
+        <AlertTitle>How Veo Works</AlertTitle>
+        <AlertDescription>Veo understands complex narratives. Be descriptive and leverage its unique audio and dialogue generation capabilities.</AlertDescription>
+      </Alert>
+      <div className="mt-6 flex flex-col md:flex-row gap-6">
+        {/* Left Column: Controls */}
+        <div className="w-full md:w-1/2 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2"><MoveUpRight className="w-5 h-5 text-green-400" /> Automated Motion Control</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <p className="text-sm text-muted-foreground">The AI detected these objects. Select a motion for any you'd like to animate.</p>
-              {analysisResult.detectedObjects.map((item) => (
-                <div key={item.name} className="grid grid-cols-[1fr,1fr] gap-4 items-center p-2 border rounded-md">
-                  <Label className="font-medium text-right truncate" title={item.name}>{item.name}</Label>
-                  <Select
-                    value={motionSelections[item.name] || "None"}
-                    onValueChange={(value) => handleMotionSelectionChange(item.name, value)}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a motion..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="None">None</SelectItem>
-                      {item.suggestedMotions.map(motion => (
-                        <SelectItem key={motion} value={motion}>{motion}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              ))}
+            <CardHeader><CardTitle>What type of movie are you creating?</CardTitle></CardHeader>
+            <CardContent><SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} /></CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> AI Scene Detection</CardTitle></CardHeader>
+            <CardContent>
+              <p className="text-sm text-muted-foreground mb-3">Upload a starting frame to automatically detect objects and suggest animations.</p>
+              <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
+                {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
+                {isLoading && (
+                  <div className="absolute inset-0 bg-black/50 flex items-center justify-center">
+                    <Loader2 className="h-8 w-8 text-white animate-spin" />
+                    <span className="ml-2 text-white">Analyzing...</span>
+                  </div>
+                )}
+              </div>
+              <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
+                {imagePreview ? 'Upload a Different Frame' : 'Upload Starting Frame'}
+              </Button>
+              <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/png, image/jpeg, image/webp" />
             </CardContent>
           </Card>
-        )}
 
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            <Button variant="outline" onClick={() => handlePresetSelect('Street Interview')}>Street Interview</Button>
-            <Button variant="outline" onClick={() => handlePresetSelect('Cinematic Vlog')}>Cinematic Vlog</Button>
-            <Button variant="outline" onClick={() => handlePresetSelect('Unboxing Demo')}>Unboxing Demo</Button>
-          </CardContent>
-        </Card>
-        
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Film className="w-5 h-5" /> Cinematic & Style Controls</CardTitle></CardHeader>
-          <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptions} />
-            <SelectField label="Lighting Style" placeholder="Lighting" value={lighting} onChange={setLighting} options={lightingOptions} />
-            <SelectField label="Camera Shot" placeholder="Shot Type" value={shot} onChange={setShot} options={shotOptions} />
-            <SelectField label="Camera Motion" placeholder="Motion" value={motion} onChange={setMotion} options={motionOptions} />
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader><CardTitle>Visual Foundation</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <PromptField label="Character & Action" placeholder="e.g., A brave explorer discovering a hidden waterfall" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
+              <PromptField label="Scene & Environment" placeholder="e.g., A lush, vibrant jungle with bioluminescent plants" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />
+            </CardContent>
+          </Card>
+          
+          {analysisResult && analysisResult.detectedObjects && analysisResult.detectedObjects.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2"><MoveUpRight className="w-5 h-5 text-green-400" /> Automated Motion Control</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">The AI detected these objects. Select a motion for any you'd like to animate.</p>
+                {analysisResult.detectedObjects.map((item) => (
+                  <div key={item.name} className="grid grid-cols-[1fr,1fr] gap-4 items-center p-2 border rounded-md">
+                    <Label className="font-medium text-right truncate" title={item.name}>{item.name}</Label>
+                    <Select
+                      value={motionSelections[item.name] || "None"}
+                      onValueChange={(value) => handleMotionSelectionChange(item.name, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a motion..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="None">None</SelectItem>
+                        {item.suggestedMotions.map(motion => (
+                          <SelectItem key={motion} value={motion}>{motion}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          )}
 
-        <Card>
-          <CardHeader><CardTitle className="flex items-center gap-2"><Mic className="w-5 h-5" /> Audio & Dialogue</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-1.5"><Label>Audio Description</Label><Input placeholder="e.g., sound of rushing water, birds chirping" value={audioDesc} onChange={e => setAudioDesc(e.target.value)} /></div>
-            <div className="space-y-1.5"><Label>Dialogue</Label><Textarea placeholder="Character A: 'We finally made it.'" value={dialogue} onChange={e => setDialogue(e.target.value)} className="min-h-[60px]" /></div>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+              <Button variant="outline" onClick={() => handlePresetSelect('Street Interview')}>Street Interview</Button>
+              <Button variant="outline" onClick={() => handlePresetSelect('Cinematic Vlog')}>Cinematic Vlog</Button>
+              <Button variant="outline" onClick={() => handlePresetSelect('Unboxing Demo')}>Unboxing Demo</Button>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Film className="w-5 h-5" /> Cinematic & Style Controls</CardTitle></CardHeader>
+            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptions} />
+              <SelectField label="Lighting Style" placeholder="Lighting" value={lighting} onChange={setLighting} options={lightingOptions} />
+              <SelectField label="Camera Shot" placeholder="Shot Type" value={shot} onChange={setShot} options={shotOptions} />
+              <SelectField label="Camera Motion" placeholder="Motion" value={motion} onChange={setMotion} options={motionOptions} />
+            </CardContent>
+          </Card>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-1.5"><Label>Negative Prompt</Label><Input placeholder="e.g., blurry, cartoon, text" value={negative} onChange={e => setNegative(e.target.value)} /></div>
-          <div className="space-y-1.5"><Label>Aspect Ratio</Label><Select value={aspect} onValueChange={setAspect}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{aspectRatioOptions.map(a => (<SelectItem key={a} value={a}>{a}</SelectItem>))}</SelectContent></Select></div>
+          <Card>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Mic className="w-5 h-5" /> Audio & Dialogue</CardTitle></CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-1.5"><Label>Audio Description</Label><Input placeholder="e.g., sound of rushing water, birds chirping" value={audioDesc} onChange={e => setAudioDesc(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Dialogue</Label><Textarea placeholder="Character A: 'We finally made it.'" value={dialogue} onChange={e => setDialogue(e.target.value)} className="min-h-[60px]" /></div>
+            </CardContent>
+          </Card>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-1.5"><Label>Negative Prompt</Label><Input placeholder="e.g., blurry, cartoon, text" value={negative} onChange={e => setNegative(e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>Aspect Ratio</Label><Select value={aspect} onValueChange={setAspect}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{aspectRatioOptions.map(a => (<SelectItem key={a} value={a}>{a}</SelectItem>))}</SelectContent></Select></div>
+          </div>
+          <div className="space-y-1.5"><Label>Duration ({duration}s)</Label><Slider min={2} max={15} step={1} value={[duration]} onValueChange={([v]) => setDuration(v)} /></div>
         </div>
-        <div className="space-y-1.5"><Label>Duration ({duration}s)</Label><Slider min={2} max={15} step={1} value={[duration]} onValueChange={([v]) => setDuration(v)} /></div>
-      
-        <Card>
-          <CardHeader><CardTitle>Generated Prompt</CardTitle></CardHeader>
-          <CardContent>
-            <div className="relative space-y-4">
-              <Textarea value={finalPrompt || "Upload an image or fill out the form, then click Generate..."} readOnly className="min-h-[250px] w-full" />
-              {finalPrompt && (<Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button>)}
-              <div className="flex items-center gap-2">
-                <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}</Button>
-                <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over"><RotateCcw className="h-5 w-5" /></Button>
+
+        {/* Right Column: Output and Controls */}
+        <div className="w-full md:w-1/2 space-y-6">
+          <Card>
+            <CardHeader><CardTitle>Generated Prompt</CardTitle></CardHeader>
+            <CardContent>
+              <div className="relative space-y-4">
+                <Textarea value={finalPrompt || "Upload an image or fill out the form, then click Generate..."} readOnly className="min-h-[250px] w-full" />
+                {finalPrompt && (<Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button>)}
+                <div className="flex items-center gap-2">
+                  <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}</Button>
+                  <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over"><RotateCcw className="h-5 w-5" /></Button>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
-          <CardContent className="text-sm space-y-3 text-muted-foreground">
-            <p><strong>Build a Story First:</strong> Start with a clear narrative arc (e.g., "A detective uncovers a clue") and expand with character actions and dialogue to guide Veo’s storytelling engine effectively.</p>
-            <p><strong>Enhance with Audio Cues:</strong> Include specific sound descriptions (e.g., "distant thunder, footsteps echoing") to leverage Veo’s audio generation, creating immersive scenes.</p>
-            <p><strong>Use Presets as a Base:</strong> Select a preset (e.g., "Cinematic Vlog") and tweak it with custom prompts to save time while maintaining high-quality outputs.</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+              <p><strong>Build a Story First:</strong> Start with a clear narrative arc (e.g., "A detective uncovers a clue") and expand with character actions and dialogue to guide Veo’s storytelling engine effectively.</p>
+              <p><strong>Enhance with Audio Cues:</strong> Include specific sound descriptions (e.g., "distant thunder, footsteps echoing") to leverage Veo’s audio generation, creating immersive scenes.</p>
+              <p><strong>Use Presets as a Base:</strong> Select a preset (e.g., "Cinematic Vlog") and tweak it with custom prompts to save time while maintaining high-quality outputs.</p>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader><CardTitle><BookOpen className="w-5 h-5 inline-block mr-2" />User Guide Walkthrough</CardTitle></CardHeader>
-          <CardContent className="text-sm space-y-3 text-muted-foreground">
-            <p><strong>Uploading a Starting Frame:</strong> Click the "AI Scene Detection" upload area, select an image, and let the AI populate character and scene fields.</p>
-            <p><strong>Automated Motion:</strong> After upload, the "Automated Motion Control" card will appear with detected objects. Use the dropdowns to select animations.</p>
-            <p><strong>Crafting Your Narrative:</strong> Refine the AI-generated text in the "Character & Action" and "Scene & Environment" boxes.</p>
-            <p><strong>Generating the Video:</strong> Click the "Generate Veo Prompt" button to process your input and see the final result in the "Generated Prompt" box.</p>
-          </CardContent>
-        </Card>
+          <Card>
+            <CardHeader><CardTitle><BookOpen className="w-5 h-5 inline-block mr-2" />User Guide Walkthrough</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+              <p><strong>Uploading a Starting Frame:</strong> Click the "AI Scene Detection" upload area, select an image, and let the AI populate character and scene fields.</p>
+              <p><strong>Automated Motion:</strong> After upload, the "Automated Motion Control" card will appear with detected objects. Use the dropdowns to select animations.</p>
+              <p><strong>Crafting Your Narrative:</strong> Refine the AI-generated text in the "Character & Action" and "Scene & Environment" boxes.</p>
+              <p><strong>Generating the Video:</strong> Click the "Generate Veo Prompt" button to process your input and see the final result in the "Generated Prompt" box.</p>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
           <DialogHeader><DialogTitle>Choose a Variant</DialogTitle><DialogDescription>Select one of the AI-generated variants below to replace your text.</DialogDescription></DialogHeader>
