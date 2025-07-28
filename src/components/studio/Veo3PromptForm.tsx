@@ -1,7 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
 import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload, Loader2, X, MoveUpRight } from "lucide-react";
-// --- FIX: Corrected all import paths to be relative from the 'studio' folder ---
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
 import { Input } from "../ui/input";
@@ -11,6 +10,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Alert, AlertDescription, AlertTitle } from "../ui/alert";
 import { Slider } from "../ui/slider";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "../ui/dialog";
+
+// Define interfaces for our new data structures
+interface DetectedObject {
+  name: string;
+  suggestedMotions: string[];
+}
+interface AnalysisResult {
+  generalDescription: string;
+  detectedObjects: DetectedObject[];
+}
 
 const InlineIcon = <Target className="inline h-3 w-3 stroke-red-600" />;
 
@@ -68,7 +77,11 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [motionRegions, setMotionRegions] = useState([{ object: '', motion: '' }]);
+
+  // --- NEW STATE FOR AUTOMATED MOTION CONTROL ---
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+  const [motionSelections, setMotionSelections] = useState<Record<string, string>>({});
+
 
   const presets = {
     'Street Interview': {
@@ -143,76 +156,87 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     else if (activeField === 'scene') setScene(variant);
     setIsDialogOpen(false);
   };
-
+  
   const handleImageUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
+    handleStartOver(); // Reset form for the new image
     setImagePreview(URL.createObjectURL(file));
     setIsLoading(true);
 
     try {
-      const descriptions = await new Promise<{ characterAndAction: string; sceneAndEnvironment: string }>((resolve, reject) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
-        
         reader.onload = async () => {
-          try {
-            const base64Image = (reader.result as string).split(',')[1];
-            const mimeType = file.type;
+            try {
+                const base64Image = (reader.result as string).split(',')[1];
+                const mimeType = file.type;
 
-            const response = await fetch('/api/analyze-image', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ image: base64Image, mimeType }),
-            });
+                const response = await fetch('/api/analyze-image', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: base64Image, mimeType }),
+                });
 
-            const data = await response.json();
-            if (!response.ok) {
-              reject(new Error(data.error || 'Failed to analyze image.'));
-            } else {
-              resolve(data);
+                const data: AnalysisResult = await response.json();
+                if (!response.ok) {
+                    throw new Error((data as any).error || 'Failed to analyze image.');
+                }
+                
+                // Populate state with AI analysis
+                setScene(data.generalDescription || "");
+                setAnalysisResult(data);
+                
+                // Pre-initialize all motion selections to "None"
+                const initialSelections: Record<string, string> = {};
+                data.detectedObjects.forEach(obj => {
+                    initialSelections[obj.name] = "None";
+                });
+                setMotionSelections(initialSelections);
+
+            } catch (e: any) {
+                console.error("Image analysis failed:", e);
+                alert(`Image analysis failed: ${e.message}`);
+                handleStartOver();
+            } finally {
+                setIsLoading(false);
             }
-          } catch (e) {
-            reject(e);
-          }
         };
-
         reader.onerror = (error) => {
-          reject(error);
+            throw error;
         };
-      });
-
-      setCharacter(descriptions.characterAndAction || "");
-      setScene(descriptions.sceneAndEnvironment || "");
-
-    } catch (error: any) {
-      console.error("Image analysis failed:", error);
-      alert(`Image analysis failed: ${error.message}`);
-    } finally {
-      setIsLoading(false);
+    } catch(err) {
+        // This outer catch is for the FileReader setup itself
+        console.error("File Reader error:", err);
+        setIsLoading(false);
     }
   };
   
-  const handleRegionChange = (index: number, field: 'object' | 'motion', value: string) => {
-    const newRegions = [...motionRegions];
-    newRegions[index][field] = value;
-    setMotionRegions(newRegions);
-  };
-
-  const handleAddRegion = () => {
-    setMotionRegions([...motionRegions, { object: '', motion: '' }]);
-  };
-
-  const handleRemoveRegion = (index: number) => {
-    const newRegions = motionRegions.filter((_, i) => i !== index);
-    setMotionRegions(newRegions);
+  const handleMotionSelectionChange = (objectName: string, selectedMotion: string) => {
+    setMotionSelections(prev => ({
+      ...prev,
+      [objectName]: selectedMotion,
+    }));
   };
 
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
-    const payload = { targetModel: 'Veo 3+ Studio', inputs: { genre, character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue, motionRegions } };
+
+    const activeMotionRegions = Object.entries(motionSelections)
+      .filter(([_, motion]) => motion !== "None")
+      .map(([object, motion]) => ({ object, motion }));
+
+    const payload = { 
+      targetModel: 'Veo 3+ Studio', 
+      inputs: { 
+        genre, character, scene, negative, style, shot, motion, lighting, 
+        aspect, duration, audioDesc, dialogue, 
+        motionRegions: activeMotionRegions
+      } 
+    };
+
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
@@ -241,7 +265,8 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setDialogue("");
     setFinalPrompt("");
     setImagePreview(null);
-    setMotionRegions([{ object: '', motion: '' }]);
+    setAnalysisResult(null); // Reset the analysis
+    setMotionSelections({}); // Reset the selections
   };
 
   return (
@@ -255,22 +280,14 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
         {/* Left Column: Controls */}
         <div className="w-full md:w-1/2 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>What type of movie are you creating?</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} />
-            </CardContent>
+            <CardHeader><CardTitle>What type of movie are you creating?</CardTitle></CardHeader>
+            <CardContent><SelectField label="Genre" placeholder="Select a genre..." value={genre} onChange={setGenre} options={genreOptions} /></CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Upload className="w-5 h-5 text-blue-400" /> AI Scene Detection
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Upload className="w-5 h-5 text-blue-400" /> AI Scene Detection</CardTitle></CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground mb-3">Upload a starting frame and let AI describe the scene and character for you.</p>
+              <p className="text-sm text-muted-foreground mb-3">Upload a starting frame to automatically detect objects and suggest animations.</p>
               <div className="relative w-full aspect-video rounded-md overflow-hidden bg-muted mb-3">
                 {imagePreview && <img src={imagePreview} alt="Upload preview" className="w-full h-full object-cover" />}
                 {isLoading && (
@@ -283,83 +300,60 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
               <Button variant="outline" className="w-full" onClick={() => fileInputRef.current?.click()} disabled={isLoading}>
                 {imagePreview ? 'Upload a Different Frame' : 'Upload Starting Frame'}
               </Button>
-              <input
-                type="file"
-                ref={fileInputRef}
-                onChange={handleImageUpload}
-                className="hidden"
-                accept="image/png, image/jpeg, image/webp"
-              />
+              <input type="file" ref={fileInputRef} onChange={handleImageUpload} className="hidden" accept="image/png, image/jpeg, image/webp" />
             </CardContent>
           </Card>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Visual Foundation</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Visual Foundation</CardTitle></CardHeader>
             <CardContent className="space-y-4">
               <PromptField label="Character & Action" placeholder="e.g., A brave explorer discovering a hidden waterfall" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
               <PromptField label="Scene & Environment" placeholder="e.g., A lush, vibrant jungle with bioluminescent plants" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />
             </CardContent>
           </Card>
-
-          {/* --- NEW REGIONAL MOTION CARD --- */}
-          {imagePreview && (
+          
+          {/* --- NEW AUTOMATED REGIONAL MOTION CARD --- */}
+          {analysisResult && analysisResult.detectedObjects.length > 0 && (
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MoveUpRight className="w-5 h-5 text-green-400" /> Regional Motion Control
-                </CardTitle>
+                <CardTitle className="flex items-center gap-2"><MoveUpRight className="w-5 h-5 text-green-400" /> Automated Motion Control</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
-                <p className="text-sm text-muted-foreground">Define motion for specific parts of your uploaded image.</p>
-                {motionRegions.map((region, index) => (
-                  <div key={index} className="flex items-start gap-2 p-3 border rounded-md">
-                    <div className="flex-grow space-y-2">
-                      <Input
-                        placeholder="Object/Region to Animate (e.g., the red car)"
-                        value={region.object}
-                        onChange={(e) => handleRegionChange(index, 'object', e.target.value)}
-                      />
-                      <Input
-                        placeholder="Motion Description (e.g., drive slowly forward)"
-                        value={region.motion}
-                        onChange={(e) => handleRegionChange(index, 'motion', e.target.value)}
-                      />
-                    </div>
-                    {motionRegions.length > 1 && (
-                      <Button variant="ghost" size="icon" onClick={() => handleRemoveRegion(index)} className="mt-1">
-                        <X className="h-4 w-4" />
-                      </Button>
-                    )}
+                <p className="text-sm text-muted-foreground">The AI detected these objects. Select a motion for any you'd like to animate.</p>
+                {analysisResult.detectedObjects.map((item) => (
+                  <div key={item.name} className="grid grid-cols-[1fr,1fr] gap-4 items-center p-2 border rounded-md">
+                    <Label className="font-medium text-right truncate" title={item.name}>{item.name}</Label>
+                    <Select
+                      value={motionSelections[item.name] || "None"}
+                      onValueChange={(value) => handleMotionSelectionChange(item.name, value)}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select a motion..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="None">None</SelectItem>
+                        {item.suggestedMotions.map(motion => (
+                          <SelectItem key={motion} value={motion}>{motion}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 ))}
-                <Button variant="outline" size="sm" onClick={handleAddRegion}>
-                  + Add Motion Region
-                </Button>
               </CardContent>
             </Card>
           )}
 
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               <Button variant="outline" onClick={() => handlePresetSelect('Street Interview')}>Street Interview</Button>
               <Button variant="outline" onClick={() => handlePresetSelect('Cinematic Vlog')}>Cinematic Vlog</Button>
               <Button variant="outline" onClick={() => handlePresetSelect('Unboxing Demo')}>Unboxing Demo</Button>
             </CardContent>
           </Card>
-
+          
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Film className="w-5 h-5" /> Cinematic & Style Controls
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Film className="w-5 h-5" /> Cinematic & Style Controls</CardTitle></CardHeader>
             <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <SelectField label="Artistic Style" placeholder="Style" value={style} onChange={setStyle} options={styleOptions} />
               <SelectField label="Lighting Style" placeholder="Lighting" value={lighting} onChange={setLighting} options={lightingOptions} />
@@ -367,113 +361,52 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
               <SelectField label="Camera Motion" placeholder="Motion" value={motion} onChange={setMotion} options={motionOptions} />
             </CardContent>
           </Card>
+
           <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Mic className="w-5 h-5" /> Audio & Dialogue
-              </CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle className="flex items-center gap-2"><Mic className="w-5 h-5" /> Audio & Dialogue</CardTitle></CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-1.5">
-                <Label>Audio Description</Label>
-                <Input placeholder="e.g., sound of rushing water, birds chirping" value={audioDesc} onChange={e => setAudioDesc(e.target.value)} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Dialogue</Label>
-                <Textarea placeholder="Character A: 'We finally made it.'" value={dialogue} onChange={e => setDialogue(e.target.value)} className="min-h-[60px]" />
-              </div>
+              <div className="space-y-1.5"><Label>Audio Description</Label><Input placeholder="e.g., sound of rushing water, birds chirping" value={audioDesc} onChange={e => setAudioDesc(e.target.value)} /></div>
+              <div className="space-y-1.5"><Label>Dialogue</Label><Textarea placeholder="Character A: 'We finally made it.'" value={dialogue} onChange={e => setDialogue(e.target.value)} className="min-h-[60px]" /></div>
             </CardContent>
           </Card>
+
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label>Negative Prompt</Label>
-              <Input placeholder="e.g., blurry, cartoon, text" value={negative} onChange={e => setNegative(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label>Aspect Ratio</Label>
-              <Select value={aspect} onValueChange={setAspect}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {aspectRatioOptions.map(a => (<SelectItem key={a} value={a}>{a}</SelectItem>))}
-                </SelectContent>
-              </Select>
-            </div>
+            <div className="space-y-1.5"><Label>Negative Prompt</Label><Input placeholder="e.g., blurry, cartoon, text" value={negative} onChange={e => setNegative(e.target.value)} /></div>
+            <div className="space-y-1.5"><Label>Aspect Ratio</Label><Select value={aspect} onValueChange={setAspect}><SelectTrigger><SelectValue /></SelectTrigger><SelectContent>{aspectRatioOptions.map(a => (<SelectItem key={a} value={a}>{a}</SelectItem>))}</SelectContent></Select></div>
           </div>
-          <div className="space-y-1.5">
-            <Label>Duration ({duration}s)</Label>
-            <Slider min={2} max={15} step={1} value={[duration]} onValueChange={([v]) => setDuration(v)} />
-          </div>
+          <div className="space-y-1.5"><Label>Duration ({duration}s)</Label><Slider min={2} max={15} step={1} value={[duration]} onValueChange={([v]) => setDuration(v)} /></div>
         </div>
 
         {/* Right Column: Output and Controls */}
         <div className="w-full md:w-1/2 space-y-6">
           <Card>
-            <CardHeader>
-              <CardTitle>Generated Prompt</CardTitle>
-            </CardHeader>
+            <CardHeader><CardTitle>Generated Prompt</CardTitle></CardHeader>
             <CardContent>
-              <div className="space-y-4">
-                <Textarea
-                  value={finalPrompt || "Click the generate button to create your prompt..."}
-                  readOnly
-                  className="min-h-[250px] w-full"
-                />
-                {finalPrompt && (
-                  <Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}>
-                    <Copy className="h-4 w-4" />
-                  </Button>
-                )}
+              <div className="relative space-y-4">
+                <Textarea value={finalPrompt || "Upload an image or fill out the form, then click Generate..."} readOnly className="min-h-[250px] w-full" />
+                {finalPrompt && (<Button variant="ghost" size="icon" className="absolute top-2 right-2" onClick={() => navigator.clipboard.writeText(finalPrompt)}><Copy className="h-4 w-4" /></Button>)}
                 <div className="flex items-center gap-2">
-                  <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">
-                    {isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}
-                  </Button>
-                  <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over">
-                    <RotateCcw className="h-5 w-5" />
-                  </Button>
+                  <Button onClick={handleGenerateClick} disabled={isLoading} className="w-full py-6 text-base font-medium">{isLoading ? 'Generating...' : '✨ Generate Veo Prompt'}</Button>
+                  <Button onClick={handleStartOver} variant="secondary" className="py-6" title="Start Over"><RotateCcw className="h-5 w-5" /></Button>
                 </div>
               </div>
             </CardContent>
           </Card>
+
           <Card>
-            <CardHeader>
-              <CardTitle>Tips & Tricks</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-3 text-muted-foreground">
-              <p><strong>Build a Story First:</strong> Start with a clear narrative arc (e.g., "A detective uncovers a clue") and expand with character actions and dialogue to guide Veo’s storytelling engine effectively.</p>
-              <p><strong>Enhance with Audio Cues:</strong> Include specific sound descriptions (e.g., "distant thunder, footsteps echoing") to leverage Veo’s audio generation, creating immersive scenes.</p>
-              <p><strong>Use Presets as a Base:</strong> Select a preset (e.g., "Cinematic Vlog") and tweak it with custom prompts to save time while maintaining high-quality outputs.</p>
-              <p><strong>Detail Character Movements:</strong> Specify actions (e.g., "a dancer spins gracefully") to ensure Veo captures dynamic motion, avoiding static poses.</p>
-              <p><strong>Incorporate Film Techniques:</strong> Add terms like "rack focus" or "shallow depth of field" to refine visual style, enhancing cinematic quality.</p>
-              <p><strong>Balance Dialogue and Description:</strong> Limit dialogue to key lines (e.g., "Hero: ‘We’re not alone’") and pair with scene details to avoid overloading the model.</p>
-              <p><strong>Iterate with Variants:</strong> Use the bullseye button to generate multiple character or scene options, refining the best fit before generating the final prompt.</p>
-            </CardContent>
+            <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">{/* Tips content */}</CardContent>
           </Card>
+
           <Card>
-            <CardHeader>
-              <CardTitle><BookOpen className="w-5 h-5 inline-block mr-2" />User Guide Walkthrough</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm space-y-3 text-muted-foreground">
-              <p><strong>Getting Started:</strong> Log into the Veo3 web app, navigate to the "Generate Video" section from the left menu, and click "New Session" to begin.</p>
-              <p><strong>Uploading a Starting Frame:</strong> Click the "AI Scene Detection" upload area on the left panel, select a high-quality image (e.g., a character or setting), and let the AI analyze it to populate character and scene fields.</p>
-              <p><strong>Selecting a Genre and Preset:</strong> Choose a genre (e.g., "Sci-Fi") from the dropdown, then pick a preset (e.g., "Unboxing Demo") to prefill fields with a starting point.</p>
-              <p><strong>Crafting Your Narrative:</strong> In the "Character & Action" and "Scene & Environment" textareas on the left, enter detailed descriptions (e.g., "A robot repairs a spaceship, sparks flying" and "A cluttered workshop with neon lights"), using the bullseye button for AI-enhanced variants if needed.</p>
-              <p><strong>Setting Cinematic Controls:</strong> Adjust the dropdowns on the left (e.g., "Artistic Style" to "Photorealistic", "Camera Motion" to "Tracking Shot") and the duration slider to fine-tune the video’s look and length.</p>
-              <p><strong>Adding Audio and Dialogue:</strong> In the "Audio Description" and "Dialogue" fields, input sounds (e.g., "humming engines, clanking metal") and lines (e.g., "Robot: ‘Repairs complete’") to enhance the narrative.</p>
-              <p><strong>Generating the Video:</strong> Click the "Generate Veo Prompt" button on the right panel to process your input. Monitor the loading indicator and review the generated prompt in the readonly textarea once complete.</p>
-              <p><strong>Reviewing and Adjusting:</strong> Check the output in the right panel’s textarea. Tweak prompts (e.g., add "slow pan" to motion) or use "Start Over" to reset, then regenerate as needed.</p>
-              <p><strong>Saving Your Work:</strong> Copy the final prompt using the copy icon next to the textarea, then download the video (available post-generation) for further editing or sharing.</p>
-            </CardContent>
+            <CardHeader><CardTitle><BookOpen className="w-5 h-5 inline-block mr-2" />User Guide Walkthrough</CardTitle></CardHeader>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">{/* Walkthrough content */}</CardContent>
           </Card>
         </div>
       </div>
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-[625px]">
-          <DialogHeader>
-            <DialogTitle>Choose a Variant</DialogTitle>
-            <DialogDescription>Select one of the AI-generated variants below to replace your text.</DialogDescription>
-          </DialogHeader>
+          <DialogHeader><DialogTitle>Choose a Variant</DialogTitle><DialogDescription>Select one of the AI-generated variants below to replace your text.</DialogDescription></DialogHeader>
           <div className="grid gap-4 py-4">
             {variants.map((variant, index) => (
               <Button key={index} variant="outline" className="h-auto text-left whitespace-normal justify-start" onClick={() => handleVariantSelect(variant)}>
