@@ -1,6 +1,6 @@
 "use client";
 import { useState, useRef } from "react";
-import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload, Loader2 } from "lucide-react";
+import { Target, Lightbulb, Mic, Film, Copy, Sparkles, RotateCcw, BookOpen, Upload, Loader2, X, MoveUpRight } from "lucide-react";
 // --- FIX: Corrected all import paths to be relative from the 'studio' folder ---
 import { Textarea } from "../ui/textarea";
 import { Button } from "../ui/button";
@@ -68,13 +68,13 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [motionRegions, setMotionRegions] = useState([{ object: '', motion: '' }]);
 
   const presets = {
     'Street Interview': {
       genre: 'Comedy',
       character: 'An eccentric alien with shimmering skin, holding a retro microphone, asking passersby about their favorite human food.',
       scene: 'A busy, sun-drenched city sidewalk with a diverse crowd of people walking by, some stopping to look at the camera.',
-      // --- FIX: Added the missing 'style' property ---
       style: 'Photorealistic',
       shot: 'Medium Close-up',
       motion: 'Handheld Shaky Cam',
@@ -130,7 +130,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       setVariants(data.suggestions);
       setActiveField(fieldType);
       setIsDialogOpen(true);
-    } catch (error: any) { // --- FIX: Typed the catch block error ---
+    } catch (error: any) {
       console.error("Failed to fetch variants:", error);
       alert("Failed to get suggestions. Please try again.");
     } finally {
@@ -186,25 +186,40 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       setCharacter(descriptions.characterAndAction || "");
       setScene(descriptions.sceneAndEnvironment || "");
 
-    } catch (error: any) { // --- FIX: Typed the catch block error ---
+    } catch (error: any) {
       console.error("Image analysis failed:", error);
       alert(`Image analysis failed: ${error.message}`);
     } finally {
       setIsLoading(false);
     }
   };
+  
+  const handleRegionChange = (index: number, field: 'object' | 'motion', value: string) => {
+    const newRegions = [...motionRegions];
+    newRegions[index][field] = value;
+    setMotionRegions(newRegions);
+  };
+
+  const handleAddRegion = () => {
+    setMotionRegions([...motionRegions, { object: '', motion: '' }]);
+  };
+
+  const handleRemoveRegion = (index: number) => {
+    const newRegions = motionRegions.filter((_, i) => i !== index);
+    setMotionRegions(newRegions);
+  };
 
   const handleGenerateClick = async () => {
     setIsLoading(true);
     setFinalPrompt("");
-    const payload = { targetModel: 'Veo 3+ Studio', inputs: { genre, character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue } };
+    const payload = { targetModel: 'Veo 3+ Studio', inputs: { genre, character, scene, negative, style, shot, motion, lighting, aspect, duration, audioDesc, dialogue, motionRegions } };
     try {
       const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
       onPromptGenerated(data.finalPrompt);
-    } catch (error: any) { // --- FIX: Typed the catch block error ---
+    } catch (error: any) {
       alert("Failed to generate the final prompt.");
     } finally {
       setIsLoading(false);
@@ -226,6 +241,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setDialogue("");
     setFinalPrompt("");
     setImagePreview(null);
+    setMotionRegions([{ object: '', motion: '' }]);
   };
 
   return (
@@ -279,6 +295,54 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
 
           <Card>
             <CardHeader>
+              <CardTitle>Visual Foundation</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <PromptField label="Character & Action" placeholder="e.g., A brave explorer discovering a hidden waterfall" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
+              <PromptField label="Scene & Environment" placeholder="e.g., A lush, vibrant jungle with bioluminescent plants" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />
+            </CardContent>
+          </Card>
+
+          {/* --- NEW REGIONAL MOTION CARD --- */}
+          {imagePreview && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <MoveUpRight className="w-5 h-5 text-green-400" /> Regional Motion Control
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <p className="text-sm text-muted-foreground">Define motion for specific parts of your uploaded image.</p>
+                {motionRegions.map((region, index) => (
+                  <div key={index} className="flex items-start gap-2 p-3 border rounded-md">
+                    <div className="flex-grow space-y-2">
+                      <Input
+                        placeholder="Object/Region to Animate (e.g., the red car)"
+                        value={region.object}
+                        onChange={(e) => handleRegionChange(index, 'object', e.target.value)}
+                      />
+                      <Input
+                        placeholder="Motion Description (e.g., drive slowly forward)"
+                        value={region.motion}
+                        onChange={(e) => handleRegionChange(index, 'motion', e.target.value)}
+                      />
+                    </div>
+                    {motionRegions.length > 1 && (
+                      <Button variant="ghost" size="icon" onClick={() => handleRemoveRegion(index)} className="mt-1">
+                        <X className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={handleAddRegion}>
+                  + Add Motion Region
+                </Button>
+              </CardContent>
+            </Card>
+          )}
+
+          <Card>
+            <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Sparkles className="w-5 h-5 text-yellow-400" /> Quick Start Style Presets
               </CardTitle>
@@ -290,15 +354,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>Visual Foundation</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <PromptField label="Character & Action" placeholder="e.g., A brave explorer discovering a hidden waterfall" value={character} onChange={(e) => setCharacter(e.target.value)} onBullseyeClick={() => handleEnhance('character')} description={<>Click the {InlineIcon} to generate 3 character variants.</>} />
-              <PromptField label="Scene & Environment" placeholder="e.g., A lush, vibrant jungle with bioluminescent plants" value={scene} onChange={(e) => setScene(e.target.value)} onBullseyeClick={() => handleEnhance('scene')} description={<>Click the {InlineIcon} to generate 3 scene variants.</>} />
-            </CardContent>
-          </Card>
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
