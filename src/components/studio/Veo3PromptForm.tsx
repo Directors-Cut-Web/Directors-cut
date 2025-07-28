@@ -17,7 +17,8 @@ interface DetectedObject {
   suggestedMotions: string[];
 }
 interface AnalysisResult {
-  generalDescription: string;
+  characterDescription: string;
+  sceneDescription: string;
   detectedObjects: DetectedObject[];
 }
 
@@ -135,7 +136,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     if (!inputText) return alert("Please enter some text before enhancing.");
     setIsLoading(true);
     try {
-      const response = await fetch('/api/generate-variants', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText }) });
+      const response = await fetch('/api/generate-variants.js', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: inputText }) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "An unknown error occurred");
       setVariants(data.suggestions);
@@ -171,21 +172,19 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
           const base64Image = (reader.result as string).split(',')[1];
           const mimeType = file.type;
 
-          const response = await fetch('/api/analyze-image', {
+          const response = await fetch('/api/analyze-image.js', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ image: base64Image, mimeType }),
           });
           const data: AnalysisResult = await response.json();
 
-          // --- THIS IS THE DEBUGGING LINE ---
-          console.log("AI Analysis Response:", data);
-
           if (!response.ok) {
             throw new Error((data as any).error || 'Failed to analyze image.');
           }
           
-          setScene(data.generalDescription || "");
+          setCharacter(data.characterDescription || "");
+          setScene(data.sceneDescription || "");
           setAnalysisResult(data);
           
           const initialSelections: Record<string, string> = {};
@@ -235,7 +234,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     };
 
     try {
-      const response = await fetch('/api/generate-prompt', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+      const response = await fetch('/api/generate-prompt.js', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message);
       setFinalPrompt(data.finalPrompt);
@@ -262,8 +261,8 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     setDialogue("");
     setFinalPrompt("");
     setImagePreview(null);
-    setAnalysisResult(null); // Reset the analysis
-    setMotionSelections({}); // Reset the selections
+    setAnalysisResult(null);
+    setMotionSelections({});
   };
 
   return (
@@ -374,7 +373,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
         </div>
 
         {/* Right Column: Output and Controls */}
-        <div className="w-full md:w-1/2 space-y-6">
+        <div className="w-full md:w-1-2 space-y-6">
           <Card>
             <CardHeader><CardTitle>Generated Prompt</CardTitle></CardHeader>
             <CardContent>
@@ -391,12 +390,21 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
 
           <Card>
             <CardHeader><CardTitle>Tips & Tricks</CardTitle></CardHeader>
-            <CardContent className="text-sm space-y-3 text-muted-foreground">{/* Tips content */}</CardContent>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+              <p><strong>Build a Story First:</strong> Start with a clear narrative arc (e.g., "A detective uncovers a clue") and expand with character actions and dialogue to guide Veo’s storytelling engine effectively.</p>
+              <p><strong>Enhance with Audio Cues:</strong> Include specific sound descriptions (e.g., "distant thunder, footsteps echoing") to leverage Veo’s audio generation, creating immersive scenes.</p>
+              <p><strong>Use Presets as a Base:</strong> Select a preset (e.g., "Cinematic Vlog") and tweak it with custom prompts to save time while maintaining high-quality outputs.</p>
+            </CardContent>
           </Card>
 
           <Card>
             <CardHeader><CardTitle><BookOpen className="w-5 h-5 inline-block mr-2" />User Guide Walkthrough</CardTitle></CardHeader>
-            <CardContent className="text-sm space-y-3 text-muted-foreground">{/* Walkthrough content */}</CardContent>
+            <CardContent className="text-sm space-y-3 text-muted-foreground">
+              <p><strong>Uploading a Starting Frame:</strong> Click the "AI Scene Detection" upload area, select an image, and let the AI populate character and scene fields.</p>
+              <p><strong>Automated Motion:</strong> After upload, the "Automated Motion Control" card will appear with detected objects. Use the dropdowns to select animations.</p>
+              <p><strong>Crafting Your Narrative:</strong> Refine the AI-generated text in the "Character & Action" and "Scene & Environment" boxes.</p>
+              <p><strong>Generating the Video:</strong> Click the "Generate Veo Prompt" button to process your input and see the final result in the "Generated Prompt" box.</p>
+            </CardContent>
           </Card>
         </div>
       </div>

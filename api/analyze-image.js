@@ -9,13 +9,14 @@ module.exports.config = {
 
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 
-// The instruction manual for the AI
+// A more detailed "instruction manual" for the AI
 const systemInstruction = `
-You are an expert film director and AI assistant. Your task is to analyze an image and break it down into animatable components.
-You MUST return your response as a single, valid JSON object and nothing else. Do not include any text before or after the JSON object or use markdown like \`\`\`json.
+You are an expert film director. Your task is to analyze an image and break it down into creative components for a video prompt.
+You MUST return your response as a single, valid JSON object and nothing else. Do not use markdown.
 The JSON object must follow this exact structure:
 {
-  "generalDescription": "A brief, one-sentence description of the entire scene.",
+  "characterDescription": "A detailed, creative description of the main character and their specific action. If no character, describe the main subject.",
+  "sceneDescription": "A detailed, atmospheric description of the environment, setting, and background.",
   "detectedObjects": [
     {
       "name": "Description of an object",
@@ -32,8 +33,8 @@ const model = genAI.getGenerativeModel({
   systemInstruction: systemInstruction,
 });
 
-// The main function handler
 module.exports = async (req, res) => {
+  // ... (The rest of the file's logic remains the same)
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method Not Allowed' });
   }
