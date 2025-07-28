@@ -1,45 +1,30 @@
-const { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } = require('@google/generative-ai');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
 
+// This is our "instruction manual" for the AI.
+const systemInstruction = `
+You are an expert film director and AI assistant. Your task is to analyze an image and break it down into animatable components.
+You MUST return your response as a single, valid JSON object and nothing else. Do not include any text before or after the JSON object or use markdown like \`\`\`json.
+The JSON object must follow this exact structure:
+{
+  "generalDescription": "A brief, one-sentence description of the entire scene.",
+  "detectedObjects": [
+    {
+      "name": "Description of an object",
+      "suggestedMotions": ["motion 1", "motion 2", "motion 3"]
+    }
+  ]
+}
+`;
+
+// Initialize the Google Generative AI client
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// --- NEW: Define safety settings to be less restrictive ---
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_NONE,
-  },
-];
+// Apply the instructions directly to the model configuration
+const model = genAI.getGenerativeModel({ 
+  model: 'gemini-1.5-pro',
+  systemInstruction: systemInstruction,
+});
 
-// Apply the safety settings during model initialization
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro', safetySettings });
-
-const systemPrompt = `
-  You are an expert film director and AI assistant for a creative application called Director's Cut.
-  Your task is to analyze an image and break it down into animatable components.
-  You MUST return your response as a single, valid JSON object and nothing else. Do not include any text before or after the JSON object or use markdown.
-  The JSON object must follow this exact structure:
-  {
-    "generalDescription": "A brief, one-sentence description of the entire scene.",
-    "detectedObjects": [
-      {
-        "name": "Description of an object",
-        "suggestedMotions": ["motion 1", "motion 2", "motion 3"]
-      }
-    ]
-  }
-`;
 
 module.exports = async (req, res) => {
   if (req.method !== 'POST') {
@@ -56,7 +41,8 @@ module.exports = async (req, res) => {
       inlineData: { data: image, mimeType: mimeType },
     };
 
-    const result = await model.generateContent([systemPrompt, imagePart]);
+    // The request to the model is now much simpler
+    const result = await model.generateContent([imagePart]);
     const responseText = result.response.text();
 
     let analysisData;
@@ -65,7 +51,7 @@ module.exports = async (req, res) => {
       const endIndex = responseText.lastIndexOf('}') + 1;
       
       if (startIndex === -1 || endIndex === 0) {
-        throw new Error("No valid JSON object found in the AI response.");
+        throw new Error("No valid JSON object found in AI response.");
       }
 
       const jsonString = responseText.substring(startIndex, endIndex);
