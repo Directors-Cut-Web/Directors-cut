@@ -4,5 +4,10 @@
       "source": "/api/:path*",
       "destination": "/api/:path*"
     }
-  ]
+  ],
+  "functions": {
+    "api/analyze-image.js": {
+      "maxDuration": 45
+    }
+  }
 }
