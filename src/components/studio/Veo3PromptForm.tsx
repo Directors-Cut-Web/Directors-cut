@@ -77,8 +77,6 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
   const [finalPrompt, setFinalPrompt] = useState("");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-
-  // --- NEW STATE FOR AUTOMATED MOTION CONTROL ---
   const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
   const [motionSelections, setMotionSelections] = useState<Record<string, string>>({});
 
@@ -161,55 +159,54 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
     const file = event.target.files?.[0];
     if (!file) return;
 
-    handleStartOver(); // Reset form for the new image
+    handleStartOver();
     setImagePreview(URL.createObjectURL(file));
     setIsLoading(true);
 
     try {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-            try {
-                const base64Image = (reader.result as string).split(',')[1];
-                const mimeType = file.type;
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        try {
+          const base64Image = (reader.result as string).split(',')[1];
+          const mimeType = file.type;
 
-                const response = await fetch('/api/analyze-image', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ image: base64Image, mimeType }),
-                });
+          const response = await fetch('/api/analyze-image', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image: base64Image, mimeType }),
+          });
+          const data: AnalysisResult = await response.json();
 
-                const data: AnalysisResult = await response.json();
-                if (!response.ok) {
-                    throw new Error((data as any).error || 'Failed to analyze image.');
-                }
-                
-                // Populate state with AI analysis
-                setScene(data.generalDescription || "");
-                setAnalysisResult(data);
-                
-                // Pre-initialize all motion selections to "None"
-                const initialSelections: Record<string, string> = {};
-                data.detectedObjects.forEach(obj => {
-                    initialSelections[obj.name] = "None";
-                });
-                setMotionSelections(initialSelections);
+          // --- THIS IS THE DEBUGGING LINE ---
+          console.log("AI Analysis Response:", data);
 
-            } catch (e: any) {
-                console.error("Image analysis failed:", e);
-                alert(`Image analysis failed: ${e.message}`);
-                handleStartOver();
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        reader.onerror = (error) => {
-            throw error;
-        };
+          if (!response.ok) {
+            throw new Error((data as any).error || 'Failed to analyze image.');
+          }
+          
+          setScene(data.generalDescription || "");
+          setAnalysisResult(data);
+          
+          const initialSelections: Record<string, string> = {};
+          if (data.detectedObjects) {
+            data.detectedObjects.forEach(obj => {
+              initialSelections[obj.name] = "None";
+            });
+          }
+          setMotionSelections(initialSelections);
+        } catch (e: any) {
+          console.error("Image analysis failed:", e);
+          alert(`Image analysis failed: ${e.message}`);
+          handleStartOver();
+        } finally {
+          setIsLoading(false);
+        }
+      };
+      reader.onerror = (error) => { throw error; };
     } catch(err) {
-        // This outer catch is for the FileReader setup itself
-        console.error("File Reader error:", err);
-        setIsLoading(false);
+      console.error("File Reader error:", err);
+      setIsLoading(false);
     }
   };
   
@@ -312,8 +309,7 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
             </CardContent>
           </Card>
           
-          {/* --- NEW AUTOMATED REGIONAL MOTION CARD --- */}
-          {analysisResult && analysisResult.detectedObjects.length > 0 && (
+          {analysisResult && analysisResult.detectedObjects && analysisResult.detectedObjects.length > 0 && (
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2"><MoveUpRight className="w-5 h-5 text-green-400" /> Automated Motion Control</CardTitle>
