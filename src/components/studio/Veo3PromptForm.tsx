@@ -139,11 +139,13 @@ export default function Veo3PromptForm({ onPromptGenerated }: { onPromptGenerate
       const response = await fetch('/api/generate-variants.js', { 
         method: 'POST', 
         headers: { 'Content-Type': 'application/json' }, 
-        body: JSON.stringify({ inputText: inputText }) 
+        // --- FIX: Reverted to 'text' ---
+        body: JSON.stringify({ text: inputText }) 
       });
       const data = await response.json();
       if (!response.ok) throw new Error(data.message || "An unknown error occurred");
-      setVariants(data.variants); 
+      // --- FIX: Reverted to 'suggestions' ---
+      setVariants(data.suggestions); 
       setActiveField(fieldType);
       setIsDialogOpen(true);
     } catch (error: any) {
